@@ -1,38 +1,63 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Transpector
 
 ## Getting Started
 
-First, run the development server:
+In it's development setting currently you have to run two parts, a python script kicking off Jupyter Server (this spawns a fastAPI backend in the same event loop as the IPython Kernal), and a Next JS Server. Next JS will be compiled and served as a static file from fastAPI eventually.
 
+To run Next JS
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+To run the Jupyter server directly
+```bash
+jupyter server --config=jupyter_server_config.py
+```
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+## To Do
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+- [ ] Ablations
+- [ ] MLP nodes
+- [ ] Layernorm nodes
+- [ ] Refactor Nodes and edges code
+- [ ] Add ability to split each token into seperate node
+- [ ] Model Outputs
+- [ ] Add icons on the edges
+- [ ] Node resizing and rerendering (for canvas nodes)
+- [ ] Weight Analysis: Visualise weights
+- [ ] Weight Analysis: Matrix Factorisation
+- [ ] Inferencing layer cutoff
+- [ ] Causal tracing
+- [ ] Knowledge editing
+- [ ] Visual layer folding
+- [ ] Pattern visual grouping
+- [ ] Model Pane Upgrade
+- [ ] Layer and node type filters
+- [ ] Minimap collision with text pane
+- [ ] Text pane visibility
+- [ ] Text pane batch input
+- [ ] Full dataset input
+- [ ] Autoencoder polysemic decoding
+- [ ] Research replication using transpector
+- [ ] Optimisation: GPU rendering
+- [ ] Optimisation: Remove dead data
+- [ ] Visual spacing optimisation
+- [ ] Non blocking model updating
+- [ ] Display wide batch selector
+- [ ] Jupyter popups
+- [ ] KQV composition visualisation
+- [ ] Residual effect visualisation
+- [ ] Jupyter-UI upgrade and non dynamic import
+- [ ] Notebook autosaving
+- [ ] Notebook scrolling bugs
+- [ ] Notebook bring in all jupyterlab features
+- [ ] Websocket connection for push pull state between py/js
+- [ ] Improve typing coverage
+- [ ] Improve global state control
+- [ ] Next static export
+- [ ] Python kickoff script
+- [ ] Python package 
+- [ ] Make gifs of features
+- [ ] Custom model support
+- [ ] GPU flag
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
-
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.

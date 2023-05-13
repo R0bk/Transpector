@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react'
 import { Handle, Position } from 'reactflow';
 import { shallow } from 'zustand/shallow';
-import useStore from './store';
+import useStore from '../store';
 
 const selector = (state) => ({
     modelActivations: state.modelActivations,
@@ -10,7 +10,7 @@ const selector = (state) => ({
 import * as d3 from 'd3';
 import * as tf from '@tensorflow/tfjs';
 
-export const ResidualPlot = ({ data, width, height, renderText=false, useCanvas = true }) => {
+export const ResidualPlot = ({ data, width, height, renderText=false, useCanvas=true }) => {
     const ref = useRef();
     const marginBottom = 5;
 
@@ -138,15 +138,15 @@ export const EmbedNode = ({ data }) => {
 
 export const ResidualNode = ({ data }) => {
     const state = useStore(selector, shallow);
-    const width = 96*2;
-    const height = 96*2;
+    const width = 96*1.5;
+    const height = 96*1.5;
     console.log(data);
 
     return (
-        <div className="px-0 py-4 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">
+        <div className="px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">
             <span className='px-2 py-1 text-sm text-slate-300'>Attention Residual</span>
             <div className="flex">
-                <div className='flex flex-row w-48 h-48'>
+                <div className='flex flex-row '>
                     <ResidualPlot data={state.modelActivations?.[data.realationId] ?? data.residual} width={width} height={height} />
                 </div>
             </div>

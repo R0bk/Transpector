@@ -10,6 +10,8 @@ const rewrites = () => {
 const nextConfig = {
   experimental: { appDir: true },
   transpilePackages: [
+    '@datalayer/jupyterlite-server',
+    '@datalayer/jupyter-react',
     'yjs',
     'y-protocols'
   ],

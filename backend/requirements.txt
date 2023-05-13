@@ -1,6 +1,9 @@
 fastapi
+"uvicorn[standard]"
 transformer_lens
 circuitsvis
 einops
 fancy_einsum
 torchtyping
+jupyterlab
+nbclient

@@ -1,6 +1,6 @@
 import { Handle, Position } from 'reactflow';
 import { shallow } from 'zustand/shallow';
-import useStore from './store';
+import useStore from '../store';
 import { useState } from 'react';
 
 const selector = (state) => ({

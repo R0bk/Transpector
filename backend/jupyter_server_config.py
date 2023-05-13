@@ -1,4 +1,6 @@
 """Configuration for the Jupyter development server."""
+# To run
+# jupyter server --config=jupyter_server_config.py
 
 import os
 
@@ -100,3 +102,6 @@ c.ServerApp.kernel_ws_protocol = None # None or ''
 #################
 
 c.LabApp.collaborative = False
+
+# Statt
+c.ServerApp.file_to_run = './main.ipynb'

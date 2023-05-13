@@ -8,23 +8,47 @@ def get_available_models() -> list[HookedTransformerConfig]:
 def load_model(model_name: str):
     return HookedTransformer.from_pretrained(model_name)
 
-from torchviz import make_dot
+def head_ablation_hook(
+    attn_result: TT["batch", "seq", "n_heads", "d_model"],
+    hook: HookPoint,
+    layer_head_idx_to_ablate: list[tuple[int]]
+) -> TT["batch", "seq", "n_heads", "d_model"]:
+    attn_result[:, :, head_index_to_ablate, :] = 0.
+    
+def token_ablation_hook():
+    pass # TODO
 
-gpt2_small = HookedTransformer.from_pretrained("gpt2-small")
-model_description_text = '''## Loading Models
 
-HookedTransformer comes loaded with >40 open source GPT-style models. You can load any of them in with `HookedTransformer.from_pretrained(MODEL_NAME)`. Each model is loaded into the consistent HookedTransformer architecture, designed to be clean, consistent and interpretability-friendly. 
+pattern_hook_names_filter = lambda name: name.endswith("pattern")
 
-For this demo notebook we'll look at GPT-2 Small, an 80M parameter model. To try the model the model out, let's find the loss on this paragraph!'''
+# gpt2_small.run_with_hooks(
+#     rep_tokens_10, 
+#     return_type=None, # For efficiency, we don't need to calculate the logits
+#     fwd_hooks=[(
+#         pattern_hook_names_filter,
+#         induction_score_hook_filter
+#     )]
+# )
 
-loss, cache = gpt2_small.run_with_cache(model_description_text, return_type="loss")
-print(loss)
+# gpt2_small = HookedTransformer.from_pretrained("gpt2-small")
+# model_description_text = '''## Loading Models
+
+# HookedTransformer comes loaded with >40 open source GPT-style models. You can load any of them in with `HookedTransformer.from_pretrained(MODEL_NAME)`. Each model is loaded into the consistent HookedTransformer architecture, designed to be clean, consistent and interpretability-friendly. 
+
+# For this demo notebook we'll look at GPT-2 Small, an 80M parameter model. To try the model the model out, let's find the loss on this paragraph!'''
+
+# loss, cache = gpt2_small.run_with_cache(model_description_text, return_type="loss")
+# print(loss)
+
+
+
+# from torchviz import make_dot
 # print({x: y for x, y in gpt2_small.named_parameters()})
-print(len(list(gpt2_small.named_parameters())))
-print(cache.keys())
-dot = make_dot(loss)
-dot.format = 'png'
-dot.render('torchviz-sample')
+# print(len(list(gpt2_small.named_parameters())))
+# print(cache.keys())
+# dot = make_dot(loss)
+# dot.format = 'png'
+# dot.render('torchviz-sample')
 # print("Model loss:", loss)
 # print(gpt2_small.to_str_tokens("gpt2"))             # --> ['<|endoftext|>', 'g', 'pt', '2']
 # print(gpt2_small.to_tokens("gpt2"))                 # --> tensor([[50256, 70, 457, 17]], device='cuda:0')

@@ -56,3 +56,9 @@ body {
   --jp-rendermime-error-background: rgba(192, 57, 67, .3) !important;
   --jp-layout-color2: rgb(55 65 81) !important;
 }
+
+
+/* .dla-Jupyter-Notebook {
+  height: calc(100vh - 64px) !important;
+  top: 64px !important;
+} */
