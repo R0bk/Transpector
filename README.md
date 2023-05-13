@@ -1,5 +1,5 @@
 # Transpector
-
+Visually inspect, analyse and debug transformer models. Aimed at reducing cycle times for interpretability research and lowering the barrier to entry.
 ## Getting Started
 
 In it's development setting currently you have to run two parts, a python script kicking off Jupyter Server (this spawns a fastAPI backend in the same event loop as the IPython Kernal), and a Next JS Server. Next JS will be compiled and served as a static file from fastAPI eventually.
@@ -17,15 +17,12 @@ jupyter server --config=jupyter_server_config.py
 ## To Do
 
 - [ ] Ablations
-- [ ] MLP nodes
-- [ ] Layernorm nodes
-- [ ] Refactor Nodes and edges code
 - [ ] Add ability to split each token into seperate node
 - [ ] Model Outputs
 - [ ] Add icons on the edges
 - [ ] Node resizing and rerendering (for canvas nodes)
 - [ ] Weight Analysis: Visualise weights
-- [ ] Weight Analysis: Matrix Factorisation
+- [ ] Weight Analysis: Ability to add OV circuit/ head visualisation  
 - [ ] Inferencing layer cutoff
 - [ ] Causal tracing
 - [ ] Knowledge editing
@@ -46,7 +43,7 @@ jupyter server --config=jupyter_server_config.py
 - [ ] Display wide batch selector
 - [ ] Jupyter popups
 - [ ] KQV composition visualisation
-- [ ] Residual effect visualisation
+- [ ] Residual stream analysis visualisation
 - [ ] Jupyter-UI upgrade and non dynamic import
 - [ ] Notebook autosaving
 - [ ] Notebook scrolling bugs
@@ -60,4 +57,7 @@ jupyter server --config=jupyter_server_config.py
 - [ ] Make gifs of features
 - [ ] Custom model support
 - [ ] GPU flag
+- [x] MLP nodes
+- [x] Layernorm nodes
+- [x] Refactor Nodes and edges code
 
