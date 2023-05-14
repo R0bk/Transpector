@@ -2,6 +2,8 @@ from model_setup import *
 from transformer_lens import HookedTransformerConfig, ActivationCache
 from transformer_lens.loading_from_pretrained import OFFICIAL_MODEL_NAMES, get_pretrained_model_config
 
+Logits = TT["batch", "position", "d_vocab"]
+
 def get_available_models() -> list[HookedTransformerConfig]:
     return [get_pretrained_model_config(m) for m in OFFICIAL_MODEL_NAMES]
 
@@ -15,9 +17,10 @@ def head_ablation_hook(
 ) -> TT["batch", "seq", "n_heads", "d_model"]:
     attn_result[:, :, head_index_to_ablate, :] = 0.
     
-def token_ablation_hook():
-    pass # TODO
-
+def per_token_losses(logits: Logits, tokens):
+    log_probs = F.log_softmax(logits, dim=-1)
+    pred_log_probs = t.gather(log_probs[:, :-1], -1, tokens[:, 1:, None])[..., 0]
+    return -pred_log_probs[0]
 
 pattern_hook_names_filter = lambda name: name.endswith("pattern")
 

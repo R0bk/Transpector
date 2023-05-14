@@ -140,7 +140,7 @@ export const ResidualNode = ({ data }) => {
     const state = useStore(selector, shallow);
     const width = 96*1.5;
     const height = 96*1.5;
-    console.log(data);
+    // console.log(data);
 
     return (
         <div className="px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">
@@ -151,8 +151,8 @@ export const ResidualNode = ({ data }) => {
                 </div>
             </div>
 
-            <Handle type="target" position={Position.Bottom} className="w-16 !bg-teal-500" />
-            <Handle type="source" position={Position.Top} className="w-16 !bg-teal-500" />
+            <Handle type="target" position={Position.Bottom} className="w-8 !bg-teal-500" />
+            <Handle type="source" position={Position.Top} className="w-8 !bg-teal-500" />
         </div>
     )
 };

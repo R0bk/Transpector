@@ -10,6 +10,7 @@ import { ButtonEdge } from './FlowNodeEdge/ButtonEdge';
 import { LayerNormNode } from './FlowNodeEdge/layerNormNode';
 import { ResidualNode, EmbedNode } from './FlowNodeEdge/ResidualNodes';
 import { PatternNode, ResultNode } from './FlowNodeEdge/PatternNode';
+import { OutputNode } from './FlowNodeEdge/OutputNode';
 
 import useSWR from 'swr'
 const fetcher = (...args) => fetch(...args).then((res) => res.json())
@@ -110,6 +111,7 @@ const initialiselLayerConstants = (i, attnOnly) => {
         mlpLayerNormId: `${layerId}.ln2`,
         mlpId:`${layerId}.mlp`,
         mlpResidualId:`${layerId}.hook_resid_post`,
+        modelOutputId: `output`,
 
 })}
 
@@ -239,6 +241,14 @@ const createMlpResidualNode = ({ layerId, mlpResidualId }, { layerHeight, layerP
     position: { x: 0, y: -layerHeight - layerPadding - i * (layerHeight+layerPadding) -500},
 })
 
+const createModelOutputNode = ({ modelOutputId }, { layerHeight, layerPadding }, i): BaseNode => ({
+    id: modelOutputId,
+    type: 'modelOutput',
+    data: {
+        label: `Output`,
+    },
+    position: { x: -200, y: -layerHeight - layerPadding - i * (layerHeight+layerPadding) -500-300},
+})
 
 
 
@@ -266,6 +276,7 @@ const calculateInitialNodeAndEdges = (modelConfig) => {
                 createMlPNode(lc, modelConstants, i),
                 createMlpResidualNode(lc, modelConstants, i),
             ] : []),
+            ...(i ===  modelConfig.n_layers-1 ? [createModelOutputNode(lc, modelConstants, i)] : []),
         ]
 
         modelEdges = [
@@ -296,6 +307,9 @@ const calculateInitialNodeAndEdges = (modelConfig) => {
                 createEdge(lc.mlpLayerNormId, lc.mlpId),
                 createEdge(lc.mlpId, lc.mlpResidualId),
             ] : []),
+
+            // Add link to final node
+            ...(i ===  modelConfig.n_layers-1 ? [createEdge(lc.mlpResidualId, lc.modelOutputId)] : []),
         ]
     }
 
@@ -334,6 +348,7 @@ const Flow = ({ modelConfig }) => {
         residual: ResidualNode,
         layerNorm: LayerNormNode,
         mlp: MlpNode,
+        modelOutput: OutputNode,
     }), []);
 
       

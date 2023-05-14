@@ -9,6 +9,7 @@ const selector = (state) => ({
 
 
 import * as d3 from 'd3';
+import React from 'react';
 
 
 // Function to generate a color interpolator based on colourId
@@ -108,7 +109,7 @@ export const KeyQueryVectorNode = ({ data }) => {
     const state = useStore(selector, shallow);
     const width = 96*2;
     const height = 96;
-    console.log(data.realationId)
+    // console.log(data.realationId)
 
     return (
         <div className="px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">

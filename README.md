@@ -18,11 +18,11 @@ jupyter server --config=jupyter_server_config.py
 
 - [ ] Ablations
 - [ ] Add ability to split each token into seperate node
-- [ ] Model Outputs
 - [ ] Add icons on the edges
 - [ ] Node resizing and rerendering (for canvas nodes)
 - [ ] Weight Analysis: Visualise weights
-- [ ] Weight Analysis: Ability to add OV circuit/ head visualisation  
+- [ ] Weight Analysis: What is the OV circuit trying to copy given a token
+- [ ] Weight Analysis: What is the KQ circuit attention position distribution 
 - [ ] Inferencing layer cutoff
 - [ ] Causal tracing
 - [ ] Knowledge editing
@@ -57,7 +57,18 @@ jupyter server --config=jupyter_server_config.py
 - [ ] Make gifs of features
 - [ ] Custom model support
 - [ ] GPU flag
+- [ ] Add correct shortformer positional embedding links
+- [ ] Select many nodes
+- [ ] Nodes disabled, default and highlighted feature
+- [ ] Layernaming bugs
+- [ ] Move to same data structure in py/ js and ws for syncing
+- [ ] Add in app credits
+- [x] Canvas summed pattern and result rendering
+- [x] Add readme credits
+- [x] Model Outputs
 - [x] MLP nodes
 - [x] Layernorm nodes
 - [x] Refactor Nodes and edges code
 
+## Credits
+This work has only been possible through the usage of Transformer Lens by Neel Nanda and has been heavily inspired by circuitviz by Alan Cooney

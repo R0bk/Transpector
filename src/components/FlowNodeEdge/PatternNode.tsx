@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react'
-import { Handle, Position } from 'reactflow';
+import React, { useRef, useEffect, useState } from 'react'
+import { Handle, Position, NodeToolbar } from 'reactflow';
 import { shallow } from 'zustand/shallow';
 import useStore from '../store';
 
@@ -113,62 +113,94 @@ const PatternPlot = ({ data, width, height, renderText=false, colourId=0, useCan
                         (<svg ref={ref} width={width} height={height}></svg>)
 };
 
-const SummedPatternPlot = ({ data, width, height }) => {
+const SummedPatternPlot = ({ data, width, height, useCanvas=true }) => {
     const ref = useRef();
-    // const batchData = tf.tensor(dataArray);
   
     useEffect(() => {
-      const svg = d3.select(ref.current);
-  
-      const [B, H, T, C] = data.shape;
-      const meanData = data.mean(0);
-    //   console.log(meanData);
+        const [B, H, T, C] = data.shape;
+        const meanData = data.mean(0);
+        const x = d3.scaleBand().domain(d3.range(T)).range([0, width]);
+        const y = d3.scaleBand().domain(d3.range(C)).range([0, height]);
 
-      const x = d3.scaleBand().domain(d3.range(T)).range([0, width]);
-      const y = d3.scaleBand().domain(d3.range(C)).range([0, height]);
-  
-      meanData.arraySync().forEach((headData, index) => {
-        const colorScale = d3
-          .scaleSequential()
-          .interpolator(getColorInterpolator(index))
-          .domain(d3.extent(headData.flat()));
-  
-        const cell = svg
-          .selectAll(`g.chart${index}`)
-          .data(headData)
-          .join('g')
-          .attr('class', `chart${index}`)
-          .attr('transform', (d, i) => `translate(${x(i)},0)`)
-          .selectAll('rect')
-          .data((d) => d)
-          .join('rect')
-          .attr('y', (d, i) => y(i))
-          .attr('width', x.bandwidth())
-          .attr('height', y.bandwidth())
-          .attr('fill', (d) => colorScale(d))
-          .style('mix-blend-mode', 'normal'); // Use multiply blend mode to combine colors
-  
-      });
-  
-    }, [data, width, height]);
-  
-    return <svg ref={ref} width={width} height={height}></svg>;
+        if (useCanvas) {
+            const canvas = d3.select(ref.current);
+            const ctx = canvas.node().getContext('2d');
+            const scaleFactor = 2;
+            canvas.attr('width', width * scaleFactor);
+            canvas.attr('height', height * scaleFactor);
+            canvas.style('width', `${width}px`);
+            canvas.style('height', `${height}px`);
+            ctx.scale(scaleFactor, scaleFactor);
+
+            meanData.arraySync().forEach((headData, index) => {
+                const colorScale = d3
+                    .scaleSequential()
+                    .interpolator(getColorInterpolator(index))
+                    .domain(d3.extent(headData.flat()));
+
+                for (let i = 0; i < T; i++) {
+                    for (let j = 0; j < C; j++) {
+                        ctx.fillStyle = colorScale(headData[i][j]);
+                        ctx.fillRect(x(i), y(j), x.bandwidth(), y.bandwidth());
+                    }
+                }
+            });
+        } else {
+            const svg = d3.select(ref.current);
+            meanData.arraySync().forEach((headData, index) => {
+                const colorScale = d3
+                    .scaleSequential()
+                    .interpolator(getColorInterpolator(index))
+                    .domain(d3.extent(headData.flat()));
+
+                const cell = svg
+                    .selectAll(`g.chart${index}`)
+                    .data(headData)
+                    .join('g')
+                    .attr('class', `chart${index}`)
+                    .attr('transform', (d, i) => `translate(${x(i)},0)`)
+                    .selectAll('rect')
+                    .data((d) => d)
+                    .join('rect')
+                    .attr('y', (d, i) => y(i))
+                    .attr('width', x.bandwidth())
+                    .attr('height', y.bandwidth())
+                    .attr('fill', (d) => colorScale(d))
+                    .style('mix-blend-mode', 'normal');
+            });
+        }
+
+    }, [data, width, height, useCanvas]);
+
+    return useCanvas ? <canvas ref={ref} width={width} height={height}></canvas> : <svg ref={ref} width={width} height={height}></svg>;
 };
 
 export const PatternNode = ({ data }) => {
     const state = useStore(selector, shallow);
+    const [toolbarVisible, setToolbarVisible] = useState(false);
     const width = 96;
     const height = 96;
 
     const pattern = state.modelActivations?.[data.realationId]?.transpose([0,1,3,2]) ?? data.pattern;
     const psh = pattern.shape;
-    // console.log(pattern)
-    // console.log('pattern')
-    // console.log(`Rendering pattern node ${data.realationId} ${data?.relationSliceId} ` )
     
 
     return (
-        <div className="px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">
+        <div 
+            className="px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950"
+            onMouseEnter={() => setToolbarVisible(true)}
+            onMouseLeave={() => setToolbarVisible(false)}
+        >
+            <NodeToolbar offset={0} isVisible={toolbarVisible} position={Position.Right}>
+                <div className='flex flex-col'>
+                    <button className="bg-slate-800 hover:bg-red-400 text-slate-300 font-bold py-2 px-4 rounded-md my-1">
+                        Ablate
+                    </button>
+                    <button className="bg-slate-800 hover:bg-red-400 text-slate-300 font-bold py-2 px-4 rounded-md my-1">
+                        Isolate
+                    </button>
+                </div>
+            </NodeToolbar>
             <span className='px-2 py-1 text-sm text-slate-300'>{data.label}</span>
             <div className="flex">
                 <div className='flex flex-row w-24 h-24'>
@@ -190,9 +222,6 @@ export const ResultNode = ({ data }) => {
     const state = useStore(selector, shallow);
     const width = 96;
     const height = 96;
-    // console.log(`Rendering result node ${data.realationId}`)
-    // console.log(data.realationId)
-    // console.log(state.modelActivations?.[data.realationId])
 
     return (
         <div className="px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">

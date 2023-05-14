@@ -19,22 +19,34 @@ import { initNodes, initEdges } from './flowInit';
 
 
 type RFState = {
+  logicalClock: number;
   nodes: Node[];
   edges: Edge[];
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
+  
   modelInputText: string[];
   modelInputTokens: number[][];
   modelInputSubWords: string[][];
+
   inferencePrompt: string;
+  inferenceSubWords: string[];
   inferencing: boolean;
+  modelOutputlogits: number[][][];
+  modelOutputTokens: number[][];
+  modelOutputSubWords: string[][];
+  modelOutputLoss: number[][];
+  modelOuputFinalLoss: number;
   // modelActivations: 
+
+  modelAblationHeads: { [layer: number]: Set<number> };
 };
 
 // this is our useStore hook that we can use in our
 // components to get parts of the store and call actions
 const useStore = create<RFState>((set, get) => ({
+  logicalClock: 0,
   initNodes: initNodes,
   initEdges: initEdges,
   nodes: [...initNodes],
@@ -94,7 +106,13 @@ const useStore = create<RFState>((set, get) => ({
 
   modelActivations: {},
   inferencePrompt: '',
+  inferenceSubWords: [],
   inferencing: false,
+  modelOutputlogits: [],
+  modelOutputTokens: [],
+  modelOutputSubWords: [],
+  modelOutputLoss: [],
+  modelOuputFinalLoss: 0.,
   inferenceModel() {
     set({ inferencing: true });
 
@@ -104,13 +122,31 @@ const useStore = create<RFState>((set, get) => ({
       console.log(r);
       set({ 
         inferencePrompt: r.inferencePrompt,
+        inferenceSubWords: r.inferenceSubWords,
+        modelOutputlogits: r.logits,
+        modelOutputTokens: r.tokens,
+        modelOutputSubWords: r.subWords,
+        modelOutputLoss: r.tokenLoss,
+        modelOuputFinalLoss: r.finalLoss,
         modelActivations: Object.fromEntries(
           Object.entries(r.activationData).map(([key, val]) => [key, tf.tensor(val)]),
       )})
       set({ inferencing: false });
     });    
-    
-  }
+  },
+
+  modelAblationHeads: {},
+  addAblationHead: (modelAblationHeads, layer, head) => {
+    // If the layer doesn't exist yet in the object, create an empty array for it
+    if (!modelAblationHeads[layer]) {
+      modelAblationHeads[layer] = new Set<number>();
+    }
+
+    // Add the head to the array for this layer
+    modelAblationHeads[layer].add(head);
+    set({ modelAblationHeads: modelAblationHeads })
+  },
+
 }));
 
 export default useStore;

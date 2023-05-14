@@ -24,7 +24,6 @@ export const TextInputNode = () => {
       <div className="flex">
         <div className='flex flex-row'>
           <label className="w-[48em] block">
-            {/* <span className="block text-sm font-medium text-slate-300 py-1">Model Input</span> */}
             <input
               className="text-slate-300 bg-slate-900 shadow-sm border-0 focus:outline-none focus:border-0 placeholder-slate-400 text-sm py-2 px-3 w-full "
               placeholder="Example input..."

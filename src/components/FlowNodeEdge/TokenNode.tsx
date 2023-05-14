@@ -14,11 +14,12 @@ const selector = (state) => ({
 
 import * as d3 from 'd3';
 import * as tf from '@tensorflow/tfjs';
+import React from 'react';
 
 
 
 export const TokenNode = ({ data }) => {
-    const state = useStore(selector);
+    const state = useStore(selector, shallow);
 
     return (
         <div className="px-6 py-4 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">
@@ -52,7 +53,6 @@ const getColorScaleArray = (noColors: number, minMax) => {
 
 function blendColorsWithOpacity(colors) {
     let [r, g, b, a] = [0, 0, 0, 0];
-    console.log(colors)
   
     colors.map(parseRGBorRGBA).forEach(({r: r1, g: g1, b: b1, a: a1}) => {
       const a2 = 1 - a1;
@@ -104,7 +104,6 @@ const getBackgroundGetter = ( data, head, hoveredIndex, direction ) => {
     const colorScales = getColorScaleArray(H, minMax);
 
     return (wordIndex: number, headIndex: number) => {
-        console.log('getting bg color')
         const dataSource = direction === 'Key → Query' ? syncData : syncDataT;
         const finalIndex = hoveredIndex !== null ? hoveredIndex : wordIndex; 
 
@@ -117,7 +116,7 @@ const getBackgroundGetter = ( data, head, hoveredIndex, direction ) => {
 }
 
 export const SubWordDisplay = ({ layer=1, head=-1, direction='Key → Query', formatting='text' }) => {
-    const state = useStore(selector);
+    const state = useStore(selector, shallow);
     const [hoveredIndex, setHoveredIndex] = useState(null);
     const attentionRelationId = `blocks.${layer}.attn.hook_pattern`
 
@@ -157,13 +156,9 @@ export const SubWordDisplay = ({ layer=1, head=-1, direction='Key → Query', fo
 };
 
 export const SubWordsNode = ({ data }) => {
-    const state = useStore(selector);
-
     const direction = 'Key → Query';
     const layer = 1;
     const head = -1;
-
-
     
     return (
         <div className="px-6 py-4 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">

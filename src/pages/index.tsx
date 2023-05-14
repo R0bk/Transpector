@@ -1,9 +1,6 @@
-// import Image from 'next/image'
-// import { Inter } from 'next/font/google'
 import { Layout } from '../app/Layout'
 import "allotment/dist/style.css";
 
-// const inter = Inter({ subsets: ['latin'] })
 
 export default function Home() {
   return (

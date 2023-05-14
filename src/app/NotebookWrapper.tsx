@@ -1,6 +1,6 @@
-import Jupyter from '@datalayer/jupyter-react/lib/jupyter/Jupyter';
+// import Jupyter from '@datalayer/jupyter-react/lib/jupyter/Jupyter';
 // import Cell from '@datalayer/jupyter-react/lib/components/cell/Cell';
-import Notebook from '@datalayer/jupyter-react/lib/components/Notebook/Notebook';
+// import Notebook from '@datalayer/jupyter-react/lib/components/Notebook/Notebook';
 
 // const source = `import matplotlib.pyplot as plt
 // data = {'apple': 10, 'orange': 15, 'lemon': 5, 'lime': 20}
@@ -21,7 +21,8 @@ import {Button} from '@primer/react';
 import {PlayIcon} from '@primer/octicons-react';
 import {FileIcon} from '@primer/octicons-react';
 import {Text} from '@primer/react';
-import {notebookActions} from '@datalayer/jupyter-react';
+import {notebookActions, Jupyter, Notebook} from '@datalayer/jupyter-react';
+import React from 'react';
 
 const NotebookSimpleToolbar = (props: {notebookId: string}) => {
   const {notebookId} = props;
