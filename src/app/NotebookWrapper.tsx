@@ -67,10 +67,7 @@ export default function NotebookWrapper() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-between" style={{overflowY: 'scroll'}}>
       <Jupyter
-      collaborative={false} terminals={false}
-        // jupyterServerHttpUrl="https://datalayer-studio.datalayer.run/api/jupyter"
-        // jupyterServerWsUrl="wss://datalayer-studio.datalayer.run/api/jupyter"
-        // jupyterToken="60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6"
+        terminals={false} useRunningKernelIndex={0}
         jupyterServerHttpUrl="http://127.0.0.1:8686/api/jupyter"
         jupyterServerWsUrl="ws://127.0.0.1:8686/api/jupyter"
         jupyterToken="60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6"

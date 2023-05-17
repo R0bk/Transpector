@@ -16,7 +16,8 @@ import * as tf from '@tensorflow/tfjs';
 
 import { initNodes, initEdges } from './flowInit';
 
-
+const removeKey = (key, {[key]: _, ...rest}) => rest;
+const putMsg = {method: "PUT", headers: {"Content-Type": "application/json"}}
 
 type RFState = {
   logicalClock: number;
@@ -40,7 +41,7 @@ type RFState = {
   modelOuputFinalLoss: number;
   // modelActivations: 
 
-  modelAblationHeads: { [layer: number]: Set<number> };
+  modelAblations: { [modelComponent: string]: { [slice: string]: { slice: number[][], ablationType: 'zero' | 'freeze' } } };
 };
 
 // this is our useStore hook that we can use in our
@@ -135,17 +136,41 @@ const useStore = create<RFState>((set, get) => ({
     });    
   },
 
-  modelAblationHeads: {},
-  addAblationHead: (modelAblationHeads, layer, head) => {
-    // If the layer doesn't exist yet in the object, create an empty array for it
-    if (!modelAblationHeads[layer]) {
-      modelAblationHeads[layer] = new Set<number>();
-    }
+  modelAblations: {},
+  addAblation: (realationId, slice, ablationType) => {
+    const { modelAblations, logicalClock } = get()
+    const updatedAblations = {
+      ...modelAblations,
+      [realationId]: {
+        ...modelAblations?.[realationId],
+        [slice]: {slice: slice, ablationType}
+      }
+    }  
 
-    // Add the head to the array for this layer
-    modelAblationHeads[layer].add(head);
-    set({ modelAblationHeads: modelAblationHeads })
+    fetch("/api/ablation/sync", {
+      ...putMsg,
+      body: JSON.stringify({
+        ablations: updatedAblations,
+        clientLogicalClock: logicalClock
+      }),
+    })
+    .then(r => r.json())
+    .then((r) => {
+      set(state => ({
+        modelAblations: { ...r.ablations }, logicalClock: Math.max(logicalClock, r.server_logical_clock)
+      }))    
+    });
   },
+  rmAblation: (realationId, slice) =>
+    set(state => ({
+      modelAblations: {
+        ...state.modelAblations,
+        [realationId]: {
+          ...removeKey(slice, state.modelAblations?.[realationId])
+        }
+      }  
+  }))
+  
 
 }));
 

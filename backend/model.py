@@ -3,6 +3,7 @@ from transformer_lens import HookedTransformerConfig, ActivationCache
 from transformer_lens.loading_from_pretrained import OFFICIAL_MODEL_NAMES, get_pretrained_model_config
 
 Logits = TT["batch", "position", "d_vocab"]
+TensorType = t.TensorType
 
 def get_available_models() -> list[HookedTransformerConfig]:
     return [get_pretrained_model_config(m) for m in OFFICIAL_MODEL_NAMES]

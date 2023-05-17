@@ -1,16 +1,27 @@
 # uvicorn main:app --reload
 # from typing import Union
 
-from typing import Any, Callable, Optional, Union, Sequence
+from functools import partial
+from typing import Any, Callable, Literal, Optional, Union, Sequence
 from fastapi import FastAPI
 from pydantic import BaseModel
 from torchtyping import TensorType as TT
-from model import get_available_models, get_pretrained_model_config, load_model, ActivationCache, HookPoint, Logits, per_token_losses
+from model import get_available_models, get_pretrained_model_config, load_model, ActivationCache, HookPoint, Logits, per_token_losses, TensorType
 
 app = FastAPI()
 
 NamesFilter = Optional[Union[Callable[[str], bool], Sequence[str]]]
 Hook = tuple[Union[str, Callable[..., Any]], Callable[..., Any]]
+
+
+SliceType = list[int] # [from, to]
+AblationTypes = Literal['zero', 'freeze']
+ModelComponent = str
+SliceName = str
+AblationSliceComponents = Literal['slice', 'ablationType']
+AblationsType = dict[ModelComponent, dict[SliceName, dict[AblationSliceComponents, list[SliceType] | AblationTypes ] ] ]
+
+
 
 class Modelling:
     def __init__(self):
@@ -21,15 +32,16 @@ class Modelling:
         self.model_config = get_pretrained_model_config(self.model_name)
         self.available_models = get_available_models()
         self.last_prompt: list[str] = []
-        self.ablation_heads: dict[int, set[int]] = {}
-        self.fwd_hooks: list[Hook] = []
-        self.bwd_hooks: list[Hook] = []
+
+        self.ablations: AblationsType = {}
+        self.fwd_ablation_hooks: list[Hook] = []
+        self.bwd_ablation_hooks: list[Hook] = []
 
     @property
     def session_config(self):
         return {
             "model_config": self.model_config,
-            "ablation_heads": self.ablation_heads
+            "ablations": self.ablations
         }
     
     def set_model(self, model_name: str):
@@ -59,8 +71,12 @@ class Modelling:
         if custom_bwd_hooks:
             bwd.extend(custom_bwd_hooks)
 
-        fwd.extend(self.fwd_hooks)
-        bwd.extend(self.bwd_hooks)
+        print('forward ablation hooks are')
+        print(self.fwd_ablation_hooks)
+        fwd = [*self.fwd_ablation_hooks, *fwd, *self.fwd_ablation_hooks]
+        bwd.extend(self.bwd_ablation_hooks)
+        print()
+        print(fwd)
 
 
         with self.model.hooks(
@@ -73,7 +89,21 @@ class Modelling:
             if incl_bwd:
                 model_out.backward()
 
-        return model_out_logits, model_out_loss, cache_dict        
+        return model_out_logits, model_out_loss, cache_dict
+    
+    def ablation_hook(
+        self,
+        result: TensorType,
+        hook: HookPoint,
+        slices: list[SliceType],
+        ablation_type: AblationTypes='zero',
+    ) -> TensorType:
+        py_slice = [slice(r[0], r[1] if r[1]!=-1 else None) for r in slices]
+        
+        if ablation_type == 'zero':
+            result[py_slice] = 0.0
+
+        return result
 
     def head_ablation_hook(
         self,
@@ -127,28 +157,21 @@ class Modelling:
         return cache_copy
     
     def clean_logits(self, logits: Logits):
-        print('logits')
-        print(logits.shape)
         output_tokens: list[list[int]] = logits.argmax(dim=-1).squeeze()[:-1]
-        print('output tokens')
-        print(output_tokens.shape)
         if output_tokens.dim() == 1:
             output_tokens = output_tokens.unsqueeze(0)
-        print(output_tokens.shape)
+
         output_sub_words = [self.model.to_str_tokens(t) for t in output_tokens]
-        print(output_sub_words)
         output_logits: list[list[list[float]]] = logits.tolist()
-        print(len(output_logits), len(output_logits[0]))
-        # print('output logits')
-        # print(output_logits.shape)
+
         return  output_tokens.tolist(), output_sub_words, output_logits
 
     @classmethod
-    def clean_loss(cls, loss) -> float:
+    def clean_loss(cls, loss: TensorType) -> float:
         return loss.item()
     
     @classmethod
-    def clean_token_loss(cls, loss) -> list[list[float]]:
+    def clean_token_loss(cls, loss: TensorType) -> list[list[float]]:
         return loss.tolist()
 
 
@@ -224,38 +247,32 @@ def inference_run():
         "finalLoss": out_final_loss,
         "tokenLoss": out_token_loss,
     }
+    
+class InputAblationState(BaseModel):
+    ablations: AblationsType
+    clientLogicalClock: int
 
 
-class InputHeadsToAblate(BaseModel):
-    input: list[tuple[int, int]] # [(layerNo, headNo), ...]
+@app.put("/api/ablation/sync")
+def ablation_sync(input: InputAblationState):
+    print('input', input)
+    if input.clientLogicalClock >= ts.logical_clock:
+        print('Im here')
+        ts.logical_clock += 1
 
-@app.put("/api/ablate/syncHeads")
-def ablate_sync_heads(inputItem: InputHeadsToAblate):
-    ablation_heads: dict[int, set[int]] = {}
+        ts.fwd_ablation_hooks = []
 
-    for layer, head in inputItem.input:
-        if layer not in ablation_heads:
-            ablation_heads[layer] = set()
-        ablation_heads[layer].add(head)
+        for transformer_component_name, component_slices in input.ablations.items():
+            print('transformer comp', transformer_component_name)
+            print('transformer comp', component_slices)
+            for _, hook_config in component_slices.items():
+                print('hook config', hook_config)
+                ablation_hook = partial(ts.ablation_hook, slices=hook_config['slice'], ablation_type=hook_config['ablationType'])
+                ts.fwd_ablation_hooks.append((transformer_component_name, ablation_hook))
 
-    ts.ablation_heads = ablation_heads
+        ts.ablations = input.ablations
 
-    if len(ablation_heads):
-        ts.fwd_hooks.append(('result', ts.head_ablation_hook))
-    else:
-        ts.fwd_hooks = [(hk, hf) for hk, hf in ts.fwd_hooks if hk != 'result']
-
-    return {"status": 200}
-
-
-
-
-
-# @app.get("/api/items/{item_id}")
-# def read_item(item_id: int, q: Union[str, None] = None):
-#     return {"item_id": item_id, "q": q}
-
-
-# @app.put("/api/items/{item_id}")
-# def update_item(item_id: int, item: Item):
-#     return {"item_name": item.name, "item_id": item_id}
+    return {
+        "server_logical_clock": ts.logical_clock,
+        "ablations": ts.ablations
+    }

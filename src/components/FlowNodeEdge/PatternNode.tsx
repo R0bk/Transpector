@@ -5,10 +5,14 @@ import useStore from '../store';
 
 const selector = (state) => ({
     modelActivations: state.modelActivations,
+    modelAblations: state.modelAblations,
+    addAblation: state.addAblation,
+    rmAblation: state.rmAblation,
 });
 
 import * as d3 from 'd3';
 import * as tf from '@tensorflow/tfjs';
+import { GitMergeIcon, GitPullRequestClosedIcon } from '@primer/octicons-react';
 
 // Function to generate a color interpolator based on colourId
 const getColorInterpolator = ( colourId: number, headCount: number=12 ) => {
@@ -176,28 +180,37 @@ const SummedPatternPlot = ({ data, width, height, useCanvas=true }) => {
 };
 
 export const PatternNode = ({ data }) => {
-    const state = useStore(selector, shallow);
+    const { modelActivations, modelAblations, rmAblation, addAblation } = useStore(selector, shallow);
+    console.log(modelAblations)
+    const dataSlice = [[0,-1], [data?.relationSliceId, data?.relationSliceId+1], [0,-1], [0,-1]];
+    const isDisabled = modelAblations?.[data.realationId]?.[dataSlice.toString()]?.slice ?? false
     const [toolbarVisible, setToolbarVisible] = useState(false);
     const width = 96;
     const height = 96;
 
-    const pattern = state.modelActivations?.[data.realationId]?.transpose([0,1,3,2]) ?? data.pattern;
+    const pattern = modelActivations?.[data.realationId]?.transpose([0,1,3,2]) ?? data.pattern;
     const psh = pattern.shape;
     
 
     return (
         <div 
-            className="px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950"
+            className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${isDisabled ? 'grayscale-[95%]' : ''}`}
             onMouseEnter={() => setToolbarVisible(true)}
             onMouseLeave={() => setToolbarVisible(false)}
         >
             <NodeToolbar offset={0} isVisible={toolbarVisible} position={Position.Right}>
                 <div className='flex flex-col'>
-                    <button className="bg-slate-800 hover:bg-red-400 text-slate-300 font-bold py-2 px-4 rounded-md my-1">
-                        Ablate
+                    <button
+                        className="bg-slate-800 hover:bg-red-400 text-slate-300 py-2 px-2 rounded-md my-1"
+                        onClick={() => addAblation(data.realationId, dataSlice, 'zero')}
+                    >
+                        <div title='Ablate Head'><GitPullRequestClosedIcon fill={isDisabled ? "#888": "#fff"} size={16} /></div>
                     </button>
-                    <button className="bg-slate-800 hover:bg-red-400 text-slate-300 font-bold py-2 px-4 rounded-md my-1">
-                        Isolate
+                    <button
+                        className="bg-slate-800 hover:bg-red-400 text-slate-300 py-2 px-2 rounded-md my-1"
+                        onClick={() => rmAblation(data.realationId, dataSlice)}
+                    >
+                        <div title='Isolate Head'><GitMergeIcon size={16} /></div>
                     </button>
                 </div>
             </NodeToolbar>
