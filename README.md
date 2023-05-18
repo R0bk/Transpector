@@ -16,7 +16,6 @@ jupyter server --config=jupyter_server_config.py
 
 ## To Do
 
-- [ ] Ablations
 - [ ] Add ability to split each token into seperate node
 - [ ] Add icons on the edges
 - [ ] Node resizing and rerendering (for canvas nodes)
@@ -44,11 +43,10 @@ jupyter server --config=jupyter_server_config.py
 - [ ] Jupyter popups
 - [ ] KQV composition visualisation
 - [ ] Residual stream analysis visualisation
-- [ ] Jupyter-UI upgrade and non dynamic import
 - [ ] Notebook autosaving
 - [ ] Notebook scrolling bugs
 - [ ] Notebook bring in all jupyterlab features
-- [ ] Websocket connection for push pull state between py/js
+- [ ] Websockets for push pull state between py/js
 - [ ] Improve typing coverage
 - [ ] Improve global state control
 - [ ] Next static export
@@ -60,15 +58,19 @@ jupyter server --config=jupyter_server_config.py
 - [ ] Add correct shortformer positional embedding links
 - [ ] Select many nodes
 - [ ] Nodes disabled, default and highlighted feature
-- [ ] Layernaming bugs
 - [ ] Move to same data structure in py/ js and ws for syncing
 - [ ] Add in app credits
+- [ ] Individual activation level ablations
+- [x] Ablations
 - [x] Canvas summed pattern and result rendering
 - [x] Add readme credits
 - [x] Model Outputs
 - [x] MLP nodes
 - [x] Layernorm nodes
+- [x] Notebook loading pre existing kernel
+- [x] Jupyter-UI upgrade
 - [x] Refactor Nodes and edges code
+- [x] Layernaming bugs
 
 ## Credits
 This work has only been possible through the usage of Transformer Lens by Neel Nanda and has been heavily inspired by circuitviz by Alan Cooney
