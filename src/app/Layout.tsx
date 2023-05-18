@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ModelFlow } from '../components/Graph';
 import { ModelSelectPopup, OpenButton } from '../components/ModelSelect';
-// import { Notebook } from './Notebook';
 import dynamic from 'next/dynamic';
 export const AllotmentCmp = dynamic(
   () => import('@/components/Allotment'),
@@ -11,7 +10,6 @@ export const NotebookWrapper = dynamic(
   () => import('@/app/NotebookWrapper'),
   { ssr: false }
 )
-// import { Allotment } from "allotment";
 import "allotment/dist/style.css";
 
 export const Layout = () => {

@@ -42,6 +42,7 @@ type RFState = {
   // modelActivations: 
 
   modelAblations: { [modelComponent: string]: { [slice: string]: { slice: number[][], ablationType: 'zero' | 'freeze' } } };
+  syncAblations: (logicalClock: number, ablations: {}) => void;
 };
 
 // this is our useStore hook that we can use in our
@@ -137,39 +138,46 @@ const useStore = create<RFState>((set, get) => ({
   },
 
   modelAblations: {},
-  addAblation: (realationId, slice, ablationType) => {
-    const { modelAblations, logicalClock } = get()
-    const updatedAblations = {
-      ...modelAblations,
-      [realationId]: {
-        ...modelAblations?.[realationId],
-        [slice]: {slice: slice, ablationType}
-      }
-    }  
-
+  syncAblations: (logicalClock=get().logicalClock, ablations={}) => {
     fetch("/api/ablation/sync", {
       ...putMsg,
       body: JSON.stringify({
-        ablations: updatedAblations,
+        ablations: ablations,
         clientLogicalClock: logicalClock
       }),
     })
     .then(r => r.json())
     .then((r) => {
       set(state => ({
-        modelAblations: { ...r.ablations }, logicalClock: Math.max(logicalClock, r.server_logical_clock)
+        modelAblations: { ...r.ablations }, logicalClock: Math.max(logicalClock, r.server_logical_clock)+1
       }))    
     });
   },
-  rmAblation: (realationId, slice) =>
-    set(state => ({
-      modelAblations: {
-        ...state.modelAblations,
+  addAblations: (realationId, slices, ablationType) => {
+    const { modelAblations, logicalClock } = get()
+    const updatedAblations = {
+      ...modelAblations,
+      [realationId]: {
+        ...modelAblations?.[realationId],
+        ...Object.assign({}, ...(slices.map(slice => ({[slice]: { slice: slice, ablationType: ablationType }}))).values())
+      }
+    }  
+
+    get().syncAblations(logicalClock, updatedAblations);
+  },
+  rmAblations: (realationId, slices) => {
+    const { modelAblations, logicalClock } = get()
+    const updatedAblations = slices.reduce((currentAblations, slice) => {
+      return {
+        ...currentAblations,
         [realationId]: {
-          ...removeKey(slice, state.modelAblations?.[realationId])
-        }
-      }  
-  }))
+          ...removeKey(slice, currentAblations?.[realationId]),
+        },
+      };
+    }, { ...modelAblations });
+    
+    get().syncAblations(logicalClock, updatedAblations);
+  },
   
 
 }));

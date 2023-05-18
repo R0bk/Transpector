@@ -43,6 +43,7 @@ interface Position {
   
   interface PatternData {
     label: string;
+    layerNumber: number,
     realationId: string;
     relationSliceId?: number;
     colourId: number;
@@ -158,11 +159,12 @@ const createKqvNode = (type, index, nHeads, { layerId }, { layerInternalPadding 
     extent: 'parent',
 })
 
-const createPatternNode = (nHeads, { layerId, patternId }, { layerInternalPadding  }): BaseNode => ({
+const createPatternNode = (nHeads, { layerId, patternId }, { layerInternalPadding }, i): BaseNode => ({
     id: patternId,
     type: 'pattern',
     data: {
         label: `Pattern`,
+        layerNumber: i,
         realationId: `${layerId}.attn.hook_pattern`,
         colourId: 0,
         pattern: tf.randomNormal([1, nHeads, 5, 5]),
@@ -172,7 +174,7 @@ const createPatternNode = (nHeads, { layerId, patternId }, { layerInternalPaddin
     extent: 'parent',
 })
 
-const createHeadPatternNodes = (nHeads, { layerId }, { xOffset, layerInternalPadding  }): BaseNode[] => (
+const createHeadPatternNodes = (nHeads, { layerId }, { xOffset, layerInternalPadding  }, i): BaseNode[] => (
     Array.from({ length: nHeads }, (_, j) => {
         const headId = `${layerId}.headPattern${j}`;
         return {
@@ -180,6 +182,7 @@ const createHeadPatternNodes = (nHeads, { layerId }, { xOffset, layerInternalPad
             type: 'headPattern',
             data: {
                 label: `Head ${j}`,
+                layerNumber: i,
                 realationId: `${layerId}.attn.hook_pattern`,
                 relationSliceId: j,
                 colourId: j,
@@ -267,8 +270,8 @@ const calculateInitialNodeAndEdges = (modelConfig) => {
             createGroupNode(i, lc, modelConstants),
             createAttnLayerNormNode(lc, modelConstants),
             ...['query', 'key', 'value'].map((type, index) => createKqvNode(type, index, modelConfig.n_heads, lc, modelConstants)),
-            createPatternNode(modelConfig.n_heads, lc, modelConstants),
-            ...createHeadPatternNodes(modelConfig.n_heads, lc, modelConstants),
+            createPatternNode(modelConfig.n_heads, lc, modelConstants, i),
+            ...createHeadPatternNodes(modelConfig.n_heads, lc, modelConstants, i),
             createResultNode(modelConfig.n_heads, lc, modelConstants),
             createAttnResidualNode(lc, modelConstants, i),
             ...(!modelConfig.attn_only ? [
@@ -317,7 +320,7 @@ const calculateInitialNodeAndEdges = (modelConfig) => {
 }
 
 
-const selector = (state) => ({
+const flowSelector = (state) => ({
   nodes: state.nodes,
   edges: state.edges,
   onNodesChange: state.onNodesChange,
@@ -330,7 +333,7 @@ const selector = (state) => ({
 
 
 const Flow = ({ modelConfig }) => {
-    const { nodes, edges, onNodesChange, onEdgesChange, onConnect, createNodes, createEdges, resetFlow } = useStore(selector, shallow);
+    const { nodes, edges, onNodesChange, onEdgesChange, onConnect, createNodes, createEdges, resetFlow } = useStore(flowSelector, shallow);
 
     // Model info          
     const edgeTypes = useMemo(() => ({ button: ButtonEdge, default: BezierEdge }), []);
@@ -387,12 +390,18 @@ const Flow = ({ modelConfig }) => {
 )
 }
 
-export const ModelFlow = ({ selectedModel='gpt2' }) => {
+const modelSelector = (state) => ({
+    syncAblations: state.syncAblations,
+});
 
+export const ModelFlow = ({ selectedModel='gpt2' }) => {
+  const { syncAblations } = useStore(modelSelector, shallow);
   const { data, error } = useSWR(`/api/models/getModelConfig/${selectedModel}`, fetcher)
 
   if (error) return <div>Failed to load</div>
   if (!data) return <div>Loading...</div>
+
+  syncAblations();
 
   const modelConfig = data.config;
 

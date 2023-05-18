@@ -12,7 +12,6 @@ const foreignObjectSize = 48;
 const onEdgeClick = (evt, id, state) => {
   state.inferenceModel();
   evt.stopPropagation();
-  // alert(`remove ${id}`);
 };
 
 export function ButtonEdge({
@@ -26,7 +25,7 @@ export function ButtonEdge({
   style = {},
   markerEnd,
 }) {
-  const state = useStore(selector);
+  const state = useStore(selector, shallow);
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,

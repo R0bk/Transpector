@@ -6,8 +6,8 @@ import useStore from '../store';
 const selector = (state) => ({
     modelActivations: state.modelActivations,
     modelAblations: state.modelAblations,
-    addAblation: state.addAblation,
-    rmAblation: state.rmAblation,
+    addAblations: state.addAblations,
+    rmAblations: state.rmAblations,
 });
 
 import * as d3 from 'd3';
@@ -179,11 +179,14 @@ const SummedPatternPlot = ({ data, width, height, useCanvas=true }) => {
     return useCanvas ? <canvas ref={ref} width={width} height={height}></canvas> : <svg ref={ref} width={width} height={height}></svg>;
 };
 
+const getAllOtherSlices = (sliceNo, nHeads) => Array.from({ length: nHeads }, (_, j) => [[0,-1], [j, j+1], [0,-1], [0,-1]] ).filter(n => n[1][0] !== sliceNo);
+
+
 export const PatternNode = ({ data }) => {
-    const { modelActivations, modelAblations, rmAblation, addAblation } = useStore(selector, shallow);
+    const { modelActivations, modelAblations, rmAblations, addAblations } = useStore(selector, shallow);
     console.log(modelAblations)
     const dataSlice = [[0,-1], [data?.relationSliceId, data?.relationSliceId+1], [0,-1], [0,-1]];
-    const isDisabled = modelAblations?.[data.realationId]?.[dataSlice.toString()]?.slice ?? false
+    const isAblated = modelAblations?.[data.realationId]?.[dataSlice.toString()]?.slice ?? false
     const [toolbarVisible, setToolbarVisible] = useState(false);
     const width = 96;
     const height = 96;
@@ -194,7 +197,7 @@ export const PatternNode = ({ data }) => {
 
     return (
         <div 
-            className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${isDisabled ? 'grayscale-[95%]' : ''}`}
+            className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${isAblated ? 'grayscale-[95%]' : ''}`}
             onMouseEnter={() => setToolbarVisible(true)}
             onMouseLeave={() => setToolbarVisible(false)}
         >
@@ -202,13 +205,19 @@ export const PatternNode = ({ data }) => {
                 <div className='flex flex-col'>
                     <button
                         className="bg-slate-800 hover:bg-red-400 text-slate-300 py-2 px-2 rounded-md my-1"
-                        onClick={() => addAblation(data.realationId, dataSlice, 'zero')}
+                        onClick={isAblated
+                            ? () => rmAblations(data.realationId, [dataSlice])
+                            : () => addAblations(data.realationId, [dataSlice], 'zero')
+                        }
                     >
-                        <div title='Ablate Head'><GitPullRequestClosedIcon fill={isDisabled ? "#888": "#fff"} size={16} /></div>
+                        <div title='Ablate Head'><GitPullRequestClosedIcon fill={isAblated ? "#888": "#fff"} size={16} /></div>
                     </button>
                     <button
                         className="bg-slate-800 hover:bg-red-400 text-slate-300 py-2 px-2 rounded-md my-1"
-                        onClick={() => rmAblation(data.realationId, dataSlice)}
+                        onClick={isAblated
+                            ? () => rmAblations(data.realationId, getAllOtherSlices(data?.relationSliceId, data.pattern.shape[1])) 
+                            : () => addAblations(data.realationId, getAllOtherSlices(data?.relationSliceId, data.pattern.shape[1]), 'zero')
+                        }
                     >
                         <div title='Isolate Head'><GitMergeIcon size={16} /></div>
                     </button>
