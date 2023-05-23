@@ -9,9 +9,9 @@ To run Next JS
 npm run dev
 ```
 
-To run the Jupyter server directly
+To launch the python side
 ```bash
-jupyter server --config=jupyter_server_config.py
+python launch.py
 ```
 
 ## To Do
@@ -45,6 +45,7 @@ jupyter server --config=jupyter_server_config.py
 - [ ] Weight Analysis: What is the OV circuit trying to copy given a token
 - [ ] Weight Analysis: What is the KQ circuit attention position distribution 
 - [ ] Visual layer folding
+- [ ] Activation freezing
 - [ ] Pattern visual grouping
 - [ ] Layer and node type filters
 - [ ] Minimap collision with text pane
@@ -54,9 +55,8 @@ jupyter server --config=jupyter_server_config.py
 - [ ] KQV composition visualisation
 - [ ] Residual stream analysis visualisation
 - [ ] Notebook scrolling bugs
-- [ ] Improve typing coverage
 - [ ] Improve global state control
-- [ ] Next static export
+- [ ] Python static hosting
 - [ ] Python package 
 - [ ] Make gifs of features
 - [ ] Compute/ GPU flags/controls from UI
@@ -74,6 +74,8 @@ jupyter server --config=jupyter_server_config.py
 - [x] Text pane visibility
 - [x] Notebook loading pre existing kernel
 - [x] Upgrade model selection pane
+- [x] Improve typing coverage
+- [x] Next static export
 - [x] Python kickoff script
 - [x] Model Pane Upgrade
 - [x] Nodes disabled, default and highlighted feature

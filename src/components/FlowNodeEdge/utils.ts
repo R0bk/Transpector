@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { NodeOrigin, XYPosition, Rect, NodeInternals, Transform, ReactFlowState, useStore } from 'reactflow';
+import { NodeOrigin, XYPosition, Rect, NodeInternals, Transform, ReactFlowState, useStore, Node } from 'reactflow';
 
 export const getOverlappingArea = (rectA: Rect, rectB: Rect): number => {
     const xOverlap = Math.max(0, Math.min(rectA.x + rectA.width, rectB.x + rectB.width) - Math.max(rectA.x, rectB.x));

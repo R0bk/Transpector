@@ -1,10 +1,11 @@
 import { Handle, Position } from 'reactflow';
 import useStore from '../store';
 import React, { useState, useEffect, useRef } from 'react';
-import { select, selectAll, pointer } from 'd3-selection';
+import { select } from 'd3-selection';
 import { scaleLinear } from 'd3-scale';
 import 'd3-transition';
 import { shallow } from 'zustand/shallow';
+
 
 const outputSelector = (state) => ({
     modelOutputlogits: state.modelOutputlogits,
@@ -14,16 +15,19 @@ const outputSelector = (state) => ({
     inferenceSubWords: state.inferenceSubWords,
 });
 
+
 export const OutputNode = ({ data }) => {
     const { modelOutputSubWords, modelOutputLoss, inferenceSubWords } = useStore(outputSelector, shallow);
-    const [hoveredIndex, setHoveredIndex] = useState(null);
-    const svgRef = useRef();
+    const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
+    const svgRef = useRef(null);
 
     const width = 96*6;
     const height = 96*1;
     const padding = 10; // Padding for the first bar
 
     useEffect(() => {
+        if (!svgRef.current) return;
+
         // Reset SVG
         select(svgRef.current).selectAll("*").remove();
 
@@ -45,13 +49,13 @@ export const OutputNode = ({ data }) => {
             .join("rect");
 
         bars.attr("x", (d, i) => xScale(i))
-            .attr("y", (d) => yScale(d))
+            .attr("y", (d) => yScale(d as number))
             .attr("width", width / modelOutputLoss.length - barPadding)
-            .attr("height", (d) => height - yScale(d))
+            .attr("height", (d) => height - yScale(d as number))
             .attr("fill", (d, i) => (i === hoveredIndex ? "#d73027" : "rgba(214, 39, 40, 0.2)"));
 
         // Add mouseover event
-        bars.on("mouseover", (_, i) => setHoveredIndex(i))
+        bars.on("mouseover", (_, i) => setHoveredIndex(i as number))
             .on("mouseout", () => setHoveredIndex(null))
             .append("title")
             .text((d) => `Loss: ${d}`);
@@ -61,9 +65,9 @@ export const OutputNode = ({ data }) => {
             .join("line");
 
         lines.attr("x1", (d, i) => xScale(i))
-            .attr("y1", (d) => yScale(d))
+            .attr("y1", (d) => yScale(d as number))
             .attr("x2", (d, i) => xScale(i) + width / modelOutputLoss.length - barPadding)
-            .attr("y2", (d) => yScale(d))
+            .attr("y2", (d) => yScale(d as number))
             .attr("stroke", (d, i) => (i === hoveredIndex ? "#d73027" : "rgba(214, 39, 40, 0.2)"))
             .attr("stroke-width", 2);
 

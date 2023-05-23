@@ -40,7 +40,6 @@ export const TextInputNode = () => {
 }
 
 
-
 export const TextInputPopup = ({ layerCount=5, headCount=5 }) => {
   const state = useStore(selector, shallow);
   const [layer, setLayer] = useState("2");
@@ -48,12 +47,12 @@ export const TextInputPopup = ({ layerCount=5, headCount=5 }) => {
   const [direction, setDirection] = useState('Key → Query');
 
 
-  const layerOptions = [...Array(layerCount).keys()].map((_, i) =>
+  const layerOptions = Array.from({length: layerCount}, (_, i) =>
     <option key={i} value={i}>{`Layer ${i}`}</option>
   );
-  const headOptions = [{ value: "-1", text: "All" },
-  ...[...Array(headCount).keys()].map((_, i) => ({ value: i, text: `Head ${i}` }))].map(({ value, text }) =>
-    <option key={value} value={value}>{text}</option>
+  const headOptions = [{ value: "-1", text: "All" }, 
+    ...Array.from({length: headCount}, (_, i) => ({ value: i, text: `Head ${i}` }))
+    ].map(({ value, text }) => <option key={value} value={value}>{text}</option>
   );
 
   //›

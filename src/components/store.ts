@@ -41,7 +41,7 @@ type RFState = {
   modelOutputSubWords: string[][];
   modelOutputLoss: number[][];
   modelOuputFinalLoss: number;
-  // modelActivations: 
+  modelActivations: { [activationKey: string]: tf.Tensor };
 
   modelAblations: { [modelComponent: string]: { [slice: string]: { slice: number[][], ablationType: 'zero' | 'freeze' } } };
   syncAblations: (logicalClock: number, ablations: {}) => void;
@@ -140,7 +140,7 @@ const useStore = create<RFState>((set, get) => ({
         modelOutputLoss: r.tokenLoss,
         modelOuputFinalLoss: r.finalLoss,
         modelActivations: Object.fromEntries(
-          Object.entries(r.activationData).map(([key, val]) => [key, tf.tensor(val)]),
+          Object.entries(r.activationData).map(([key, val]) => [key, tf.tensor(val as tf.TensorLike)]),
       )})
       set({ inferencing: false });
     });    

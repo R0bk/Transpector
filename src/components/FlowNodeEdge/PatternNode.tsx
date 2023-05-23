@@ -21,7 +21,7 @@ const getColorInterpolator = ( colourId: number, headCount: number=12 ) => {
 };
 
 const PatternPlot = ({ data, width, height, renderText=false, colourId=0, useCanvas=true }) => {
-    const ref = useRef();
+    const ref = useRef(null);
 
     useEffect(() => {
         const [B, T, C] = data.shape;
@@ -34,80 +34,51 @@ const PatternPlot = ({ data, width, height, renderText=false, colourId=0, useCan
         .interpolator(getColorInterpolator(colourId)) // Use the generated color interpolator
         .domain(minMax);
         
-        const x = d3.scaleBand().domain(d3.range(T)).range([0, width]);
-        const y = d3.scaleBand().domain(d3.range(C)).range([0, height]);
+        const x = d3.scaleBand().domain(d3.range(T).map(String)).range([0, width]);
+        const y = d3.scaleBand().domain(d3.range(C).map(String)).range([0, height]);
 
         const syncData = meanData.arraySync()
 
-        if (useCanvas) {
-            const canvas = d3.select(ref.current);
-            const ctx = canvas.node().getContext('2d');
+        if (!ref.current) return;
 
-            // Set the canvas dimensions for high-resolution rendering
-            const scaleFactor = 2;
-            canvas.attr('width', width * scaleFactor);
-            canvas.attr('height', height * scaleFactor);
+        const canvas = d3.select(ref.current);
+        const ctx = (canvas.node() as HTMLCanvasElement).getContext('2d');
+        if (!ctx) return;
 
-            // Apply CSS to maintain the same display size
-            canvas.style('width', `${width}px`);
-            canvas.style('height', `${height}px`);
+        // Set the canvas dimensions for high-resolution rendering
+        const scaleFactor = 2;
+        canvas.attr('width', width * scaleFactor);
+        canvas.attr('height', height * scaleFactor);
 
-            // Scale the context
-            ctx.scale(scaleFactor, scaleFactor);
+        // Apply CSS to maintain the same display size
+        canvas.style('width', `${width}px`);
+        canvas.style('height', `${height}px`);
 
-            // Clear the canvas before drawing
-            ctx.clearRect(0, 0, width, height);
+        // Scale the context
+        ctx.scale(scaleFactor, scaleFactor);
 
-            // Draw cells
+        // Clear the canvas before drawing
+        ctx.clearRect(0, 0, width, height);
+
+        // Draw cells
+        for (let i = 0; i < T; i++) {
+            for (let j = 0; j < C; j++) {
+                ctx.fillStyle = colorScale(syncData[i][j]);
+                ctx.fillRect(x(String(i))!, y(String(j))!, x.bandwidth(), y.bandwidth());
+            }
+        }
+
+        // Draw text
+        if (renderText) {
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'rgb(203 213 225)';
+            ctx.font = `${x.bandwidth() * 0.3}px sans-serif`;
+
             for (let i = 0; i < T; i++) {
                 for (let j = 0; j < C; j++) {
-                    ctx.fillStyle = colorScale(syncData[i][j]);
-                    ctx.fillRect(x(i), y(j), x.bandwidth(), y.bandwidth());
+                    ctx.fillText(syncData[i][j].toFixed(2), x(String(i))! + x.bandwidth() / 2, y(String(j))! + y.bandwidth() / 2);
                 }
-            }
-
-            // Draw text
-            if (renderText) {
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillStyle = 'rgb(203 213 225)';
-                ctx.font = `${x.bandwidth() * 0.3}px sans-serif`;
-
-                for (let i = 0; i < T; i++) {
-                    for (let j = 0; j < C; j++) {
-                        ctx.fillText(syncData[i][j].toFixed(2), x(i) + x.bandwidth() / 2, y(j) + y.bandwidth() / 2);
-                    }
-                }
-            }
-        } else {        
-            const svg = d3.select(ref.current);
-            
-            const cell = svg.selectAll('g')
-                .data(meanData.arraySync())
-                .join('g')
-                .attr('transform', (d, i) => `translate(${x(i)},0)`)
-                .selectAll('rect')
-                .data(d => d)
-                .join('rect')
-                .attr('y', (d, i) => y(i))
-                .attr('width', x.bandwidth())
-                .attr('height', y.bandwidth())
-                .attr('fill', d => colorScale(d));
-
-            if (renderText) {
-                const fontSize = x.bandwidth() * 0.3; // Set the font size as a percentage of cell height
-
-                const text = svg.selectAll('g')
-                    .selectAll('text')
-                    .data(d => d)
-                    .join('text')
-                    .attr('x', x.bandwidth() / 2)
-                    .attr('y', (d, i) => y(i) + y.bandwidth() / 2)
-                    .attr('text-anchor', 'middle')
-                    .attr('dominant-baseline', 'central')
-                    .attr('fill', 'rgb(203 213 225)')
-                    .attr('font-size', fontSize)
-                    .text(d => d.toFixed(2));
             }
         }
 
@@ -118,61 +89,40 @@ const PatternPlot = ({ data, width, height, renderText=false, colourId=0, useCan
 };
 
 const SummedPatternPlot = ({ data, width, height, useCanvas=true }) => {
-    const ref = useRef();
+    const ref = useRef(null);
   
     useEffect(() => {
         const [B, H, T, C] = data.shape;
         const meanData = data.mean(0);
-        const x = d3.scaleBand().domain(d3.range(T)).range([0, width]);
-        const y = d3.scaleBand().domain(d3.range(C)).range([0, height]);
+        const x = d3.scaleBand().domain(d3.range(T).map(String)).range([0, width]);
+        const y = d3.scaleBand().domain(d3.range(C).map(String)).range([0, height]);
 
-        if (useCanvas) {
-            const canvas = d3.select(ref.current);
-            const ctx = canvas.node().getContext('2d');
-            const scaleFactor = 2;
-            canvas.attr('width', width * scaleFactor);
-            canvas.attr('height', height * scaleFactor);
-            canvas.style('width', `${width}px`);
-            canvas.style('height', `${height}px`);
-            ctx.scale(scaleFactor, scaleFactor);
+        if (!ref.current) return;
 
-            meanData.arraySync().forEach((headData, index) => {
-                const colorScale = d3
-                    .scaleSequential()
-                    .interpolator(getColorInterpolator(index))
-                    .domain(d3.extent(headData.flat()));
+        const canvas = d3.select(ref.current);
+        const ctx = (canvas.node() as HTMLCanvasElement).getContext('2d');
+        if (!ctx) return;
+    
+        const scaleFactor = 2;
+        canvas.attr('width', width * scaleFactor);
+        canvas.attr('height', height * scaleFactor);
+        canvas.style('width', `${width}px`);
+        canvas.style('height', `${height}px`);
+        ctx.scale(scaleFactor, scaleFactor);
 
-                for (let i = 0; i < T; i++) {
-                    for (let j = 0; j < C; j++) {
-                        ctx.fillStyle = colorScale(headData[i][j]);
-                        ctx.fillRect(x(i), y(j), x.bandwidth(), y.bandwidth());
-                    }
+        meanData.arraySync().forEach((headData: [number, number], index: number) => {
+            const colorScale = d3
+                .scaleSequential()
+                .interpolator(getColorInterpolator(index))
+                .domain(d3.extent(headData.flat()) as [number, number]);
+
+            for (let i = 0; i < T; i++) {
+                for (let j = 0; j < C; j++) {
+                    ctx.fillStyle = colorScale(headData[i][j]);
+                    ctx.fillRect(x(String(i))!, y(String(j))!, x.bandwidth(), y.bandwidth());
                 }
-            });
-        } else {
-            const svg = d3.select(ref.current);
-            meanData.arraySync().forEach((headData, index) => {
-                const colorScale = d3
-                    .scaleSequential()
-                    .interpolator(getColorInterpolator(index))
-                    .domain(d3.extent(headData.flat()));
-
-                const cell = svg
-                    .selectAll(`g.chart${index}`)
-                    .data(headData)
-                    .join('g')
-                    .attr('class', `chart${index}`)
-                    .attr('transform', (d, i) => `translate(${x(i)},0)`)
-                    .selectAll('rect')
-                    .data((d) => d)
-                    .join('rect')
-                    .attr('y', (d, i) => y(i))
-                    .attr('width', x.bandwidth())
-                    .attr('height', y.bandwidth())
-                    .attr('fill', (d) => colorScale(d))
-                    .style('mix-blend-mode', 'normal');
-            });
-        }
+            }
+        });
 
     }, [data, width, height, useCanvas]);
 

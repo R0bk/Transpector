@@ -24,6 +24,16 @@ export function ButtonEdge({
   targetPosition,
   style = {},
   markerEnd,
+}: {
+  id: any;
+  sourceX: any;
+  sourceY: any;
+  targetX: any;
+  targetY: any;
+  sourcePosition: any;
+  targetPosition: any;
+  style?: {};
+  markerEnd?: any; // make this field optional
 }) {
   const state = useStore(selector, shallow);
   const [edgePath, labelX, labelY] = getBezierPath({

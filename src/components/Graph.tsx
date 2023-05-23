@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo } from 'react'
-import ReactFlow, { Background, MiniMap, Controls, BezierEdge, Position } from 'reactflow';
+import ReactFlow, { Background, MiniMap, Controls, BezierEdge, Position, BackgroundVariant } from 'reactflow';
 import 'reactflow/dist/base.css';
 import { shallow } from 'zustand/shallow';
 import useStore from './store';
@@ -7,12 +7,13 @@ import { TokenNode, SubWordsNode } from './FlowNodeEdge/TokenNode';
 import { TextInputNode, TextInputPopup } from './FlowNodeEdge/TextInputNode';
 import { KeyQueryVectorNode } from './FlowNodeEdge/KeyQueryVectorNode';
 import { ButtonEdge } from './FlowNodeEdge/ButtonEdge';
-import { LayerNormNode } from './FlowNodeEdge/layerNormNode';
+import { LayerNormNode } from './FlowNodeEdge/LayerNormNode';
 import { ResidualNode, EmbedNode } from './FlowNodeEdge/ResidualNodes';
 import { PatternNode, ResultNode } from './FlowNodeEdge/PatternNode';
 import { OutputNode } from './FlowNodeEdge/OutputNode';
 
 import useSWR from 'swr'
+// @ts-ignore
 const fetcher = (...args) => fetch(...args).then((res) => res.json())
 
 
@@ -22,7 +23,7 @@ import { MlpNode } from './FlowNodeEdge/MlpNode';
 
 
 
-interface Position {
+interface NodePosition {
     x: number;
     y: number;
   }
@@ -78,7 +79,7 @@ interface Position {
     id: string;
     type?: string;
     data: PatternData | ResidualData | KqvData | ResultData | GroupData;
-    position: Position;
+    position: NodePosition;
     parentNode?: string;
     extent?: 'parent';
     style?: Style;
@@ -384,7 +385,7 @@ const Flow = ({ modelConfig }) => {
             <TextInputPopup layerCount={modelConfig.n_layers} headCount={modelConfig.n_heads} />
             <MiniMap maskColor={'rgb(2 6 23)'}  nodeColor={'rgb(4 47 46)'} style={{backgroundColor: '#0f172a'}} />
             {/* <Controls /> */}
-            <Background variant="dots" gap={24} size={1} />
+            <Background variant={BackgroundVariant.Dots} gap={24} size={1} />
         </ReactFlow>
     </div>
 )
