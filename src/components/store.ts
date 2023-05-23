@@ -26,6 +26,8 @@ type RFState = {
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
+
+  availableModels: {}[];
   
   modelInputText: string[];
   modelInputTokens: number[][];
@@ -77,6 +79,13 @@ const useStore = create<RFState>((set, get) => ({
   },
   resetFlow() {
     set({ nodes: initNodes, edges: initEdges })
+  },
+
+  availableModels: [],
+  getAvailableModels() {
+    fetch("/api/models/getModels")
+    .then(r => r.json())
+    .then((r) => {set({ availableModels: r })});
   },
 
   modelInputText: [''],
@@ -138,7 +147,7 @@ const useStore = create<RFState>((set, get) => ({
   },
 
   modelAblations: {},
-  syncAblations: (logicalClock=get().logicalClock, ablations={}) => {
+  syncAblations(logicalClock=get().logicalClock, ablations={}) {
     fetch("/api/ablation/sync", {
       ...putMsg,
       body: JSON.stringify({
@@ -153,7 +162,7 @@ const useStore = create<RFState>((set, get) => ({
       }))    
     });
   },
-  addAblations: (realationId, slices, ablationType) => {
+  addAblations(realationId, slices, ablationType) {
     const { modelAblations, logicalClock } = get()
     const updatedAblations = {
       ...modelAblations,
@@ -165,7 +174,7 @@ const useStore = create<RFState>((set, get) => ({
 
     get().syncAblations(logicalClock, updatedAblations);
   },
-  rmAblations: (realationId, slices) => {
+  rmAblations(realationId, slices) {
     const { modelAblations, logicalClock } = get()
     const updatedAblations = slices.reduce((currentAblations, slice) => {
       return {

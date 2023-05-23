@@ -7,3 +7,4 @@ fancy_einsum
 torchtyping
 jupyterlab
 nbclient
+websockets
