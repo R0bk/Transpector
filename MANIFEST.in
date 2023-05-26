@@ -1,0 +1,2 @@
+recursive-include transpector/frontend_dist *
+recursive-include transpector/notebooks *

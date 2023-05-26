@@ -8,6 +8,7 @@ const rewrites = () => {
   ]
 }
 const nextConfig = {
+  // output: 'export',
   experimental: { appDir: true },
   transpilePackages: [
     '@datalayer/jupyterlite-server',

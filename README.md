@@ -2,6 +2,8 @@
 Visually inspect, analyse and debug transformer models. Aimed at reducing cycle times for interpretability research and lowering the barrier to entry.
 ## Getting Started
 
+## Developing locally
+
 In it's development setting currently you have to run two parts, a python script kicking off Jupyter Server (this spawns a fastAPI backend in the same event loop as the IPython Kernal), and a Next JS Server. Next JS will be compiled and served as a static file from fastAPI eventually.
 
 To run Next JS
@@ -12,6 +14,22 @@ npm run dev
 To launch the python side
 ```bash
 python launch.py
+```
+
+### Building the package
+
+```
+python setup.py bdist_wheel sdist
+```
+You should see that the static files are included in the distribution from the output from the build command. Now we can install the package using
+
+```
+pip install dist/<build-name>
+```
+
+And finally, use our installed package to run the server:
+```
+transpector run
 ```
 
 ## To Do
