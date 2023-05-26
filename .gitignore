@@ -33,3 +33,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# python
+transpector/__pycache__
+.eggs
+transpector/.ipynb_checkpoints
+transpector/notebooks/.ipynb_checkpoints

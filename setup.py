@@ -1,15 +1,13 @@
-
 from setuptools import setup, find_packages
-import glob
 
 setup(
     name="transpector",
-    version="0.1.0",
-    # packages=["transpector"],
+    version="0.1.1",
     author="Rob Kopel",
     license="LICENSE",
     description="Visually inspect, analyse and debug transformer models. Aimed at reducing cycle times for interpretability research and lowering the barrier to entry.",
     long_description=open("README.md").read(),
+    long_description_content_type='text/markdown',
     install_requires=[
         "fastapi",
         "uvicorn[standard]",
@@ -25,6 +23,5 @@ setup(
     entry_points={"console_scripts": ["transpector=transpector.__main__:cli"]},
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),
     include_package_data=True,
-    # package_data={'': ['frontend_dist/*']},
-    # data_files=glob.glob('project/frontend_dist/**')
+    setup_requires=['wheel']
 )

@@ -1,7 +1,12 @@
-# Transpector
+# 🔬 Transpector
 Visually inspect, analyse and debug transformer models. Aimed at reducing cycle times for interpretability research and lowering the barrier to entry.
 ## Getting Started
 
+To use Transpector first install the package `pip install transpector` then you can start it from the command line with `transpector`. Once it's ready, navigate to `http://127.0.0.1:8000/index.html` to get started.
+
+#### Using Transpector
+
+Coming soon!
 ## Developing locally
 
 In it's development setting currently you have to run two parts, a python script kicking off Jupyter Server (this spawns a fastAPI backend in the same event loop as the IPython Kernal), and a Next JS Server. Next JS will be compiled and served as a static file from fastAPI eventually.
@@ -17,6 +22,15 @@ python launch.py
 ```
 
 ### Building the package
+
+First build the next js into a static output doing
+```
+npm run build
+```
+
+Then copy the static out folder from `./out` to `./transpector/frontend_dist`.
+
+Now you can build the python package by doing.
 
 ```
 python setup.py bdist_wheel sdist
@@ -34,7 +48,7 @@ transpector run
 
 ## To Do
 
-### Milestone 2
+#### Milestone 2️⃣
 - [ ] Add ability to split each token into seperate node
 - [ ] Inferencing layer cutoff
 - [ ] Causal tracing
@@ -56,7 +70,7 @@ transpector run
 
 
 
-### Milestone 1
+#### Milestone 1️⃣
 - [ ] Add icons on the edges
 - [ ] Node resizing and rerendering (for canvas nodes)
 - [ ] Weight Analysis: Visualise weights
@@ -74,12 +88,13 @@ transpector run
 - [ ] Residual stream analysis visualisation
 - [ ] Notebook scrolling bugs
 - [ ] Improve global state control
-- [ ] Python static hosting
-- [ ] Python package 
-- [ ] Make gifs of features
 - [ ] Compute/ GPU flags/controls from UI
 - [ ] Add correct shortformer positional embedding links
 - [ ] Move to same data structure in py/ js and ws for syncing
+- [ ] Basic usage tutorial
+- [ ] Make gifs of features
+- [ ] Baisc architecture diagram
+- [ ] Pypi package
 - [ ] Add in app credits
 - [ ] Individual activation level ablations
 - [ ] Basic MLP visuals (what would be useful?)
@@ -95,6 +110,8 @@ transpector run
 - [x] Improve typing coverage
 - [x] Next static export
 - [x] Python kickoff script
+- [x] Python static hosting
+- [x] Python package 
 - [x] Model Pane Upgrade
 - [x] Nodes disabled, default and highlighted feature
 - [x] Jupyter-UI upgrade
