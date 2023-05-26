@@ -15,7 +15,7 @@ import {
 } from '@datalayer/jupyter-react';
 import React from 'react';
 
-const CELL_HEADER_DIV_CLASS = 'dla-CellHeader-Container';
+// const CELL_HEADER_DIV_CLASS = 'dla-CellHeader-Container';
 
 const CellSidebarComponent = (props: CellSidebarProps) => {
   const {notebookId, cellId} = props;
@@ -36,7 +36,7 @@ const CellSidebarComponent = (props: CellSidebarProps) => {
     return <div></div>
   }
   return (
-    <div className={CELL_HEADER_DIV_CLASS}>
+    <>
       <div
         onClick={e => {
           e.preventDefault();
@@ -100,7 +100,7 @@ const CellSidebarComponent = (props: CellSidebarProps) => {
           </Text>
         </span>
       </div>
-    </div>
+    </>
   );
 };
 

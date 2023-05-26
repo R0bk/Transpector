@@ -134,7 +134,7 @@ const getAllOtherSlices = (sliceNo, nHeads) => Array.from({ length: nHeads }, (_
 
 export const PatternNode = ({ data }) => {
     const { modelActivations, modelAblations, rmAblations, addAblations } = useStore(selector, shallow);
-    console.log(modelAblations)
+    // console.log(modelAblations)
     const dataSlice = [[0,-1], [data?.relationSliceId, data?.relationSliceId+1], [0,-1], [0,-1]];
     const isAblated = modelAblations?.[data.realationId]?.[dataSlice.toString()]?.slice ?? false
     const [toolbarVisible, setToolbarVisible] = useState(false);

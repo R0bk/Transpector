@@ -42,9 +42,9 @@ body {
 
 /* jp-WindowedPanel-outer lm-Widget jp-Notebook jp-mod-scrollPastEnd jp-mod-showHiddenCellsButton jp-NotebookPanel-notebook jp-mod-editMode */
 
-.lm-Widget.jp-Cell.jp-CodeCell.jp-Notebook-cell {
+/* .lm-Widget.jp-Cell.jp-CodeCell.jp-Notebook-cell {
   width: calc(100% - 60px) !important;
-}
+} */
 
 :root {
   --jp-cell-prompt-not-active-font-color: rgb(148 163 184) !important;
@@ -55,6 +55,8 @@ body {
   --jp-layout-color0:  rgb(3 7 18) !important;
   --jp-rendermime-error-background: rgba(192, 57, 67, .3) !important;
   --jp-layout-color2: rgb(55 65 81) !important;
+  --jp-cell-prompt-width: 48px !important;
+  --jp-editor-cursor-color: rgb(255, 255, 255) !important;
 }
 
 

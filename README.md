@@ -86,7 +86,6 @@ transpector run
 - [ ] Non blocking model updating
 - [ ] KQV composition visualisation
 - [ ] Residual stream analysis visualisation
-- [ ] Notebook scrolling bugs
 - [ ] Improve global state control
 - [ ] Compute/ GPU flags/controls from UI
 - [ ] Add correct shortformer positional embedding links
@@ -94,7 +93,6 @@ transpector run
 - [ ] Basic usage tutorial
 - [ ] Make gifs of features
 - [ ] Baisc architecture diagram
-- [ ] Pypi package
 - [ ] Add in app credits
 - [ ] Individual activation level ablations
 - [ ] Basic MLP visuals (what would be useful?)
@@ -106,6 +104,8 @@ transpector run
 - [x] Layernorm nodes
 - [x] Text pane visibility
 - [x] Notebook loading pre existing kernel
+- [x] Notebook scrolling bugs
+- [x] Pypi package
 - [x] Upgrade model selection pane
 - [x] Improve typing coverage
 - [x] Next static export
