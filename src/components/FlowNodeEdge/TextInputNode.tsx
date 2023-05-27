@@ -12,7 +12,6 @@ const selector = (state) => ({
   updateModelInputText: state.updateModelInputText,
   inferencing: state.inferencing,
   inferenceModel: state.inferenceModel,
-
 });
 
 

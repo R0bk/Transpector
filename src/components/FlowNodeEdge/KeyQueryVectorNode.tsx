@@ -91,7 +91,6 @@ export const KQVPlot = ({ data, width, height, renderText=false }) => {
     const state = useStore(selector, shallow);
     const width = 96*2;
     const height = 96;
-    // console.log(data.realationId)
     
     return (
       <div className="px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">

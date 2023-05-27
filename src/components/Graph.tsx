@@ -129,7 +129,7 @@ const initialiseModelConstants = (modelConfig) => ({
 const createGroupNode = (i, { layerId }, { layerWidth, xStartOffset, layerHeight, layerPadding }): BaseNode => ({
     id: layerId,
     // type: 'group',
-    data: { label: `Layer ${i+1}` },
+    data: { label: `Layer ${i}` },
     position: { x: -layerWidth + xStartOffset, y: -(i+1)*(layerHeight+layerPadding) },
     sourcePosition: Position.Top,
     targetPosition: Position.Bottom,
@@ -382,11 +382,11 @@ const Flow = ({ modelConfig }) => {
             minZoom={0.05}
             proOptions={proOptions}
         >
-            <TextInputPopup layerCount={modelConfig.n_layers} headCount={modelConfig.n_heads} />
             <MiniMap maskColor={'rgb(2 6 23)'}  nodeColor={'rgb(4 47 46)'} style={{backgroundColor: '#0f172a'}} />
             {/* <Controls /> */}
             <Background variant={BackgroundVariant.Dots} gap={24} size={1} />
         </ReactFlow>
+        
     </div>
 )
 }
@@ -407,6 +407,9 @@ export const ModelFlow = ({ selectedModel='gpt2' }) => {
   const modelConfig = data.config;
 
   return (
-    <Flow modelConfig={modelConfig}/>
+    <>
+        <Flow modelConfig={modelConfig}/>
+        <TextInputPopup layerCount={modelConfig.n_layers} headCount={modelConfig.n_heads} />
+    </>
   );
 };

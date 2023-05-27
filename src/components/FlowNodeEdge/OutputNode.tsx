@@ -84,8 +84,6 @@ export const OutputNode = ({ data }) => {
     }, [hoveredIndex]);
 
 
-    console.log('modelOutputSubWords')
-    console.log(modelOutputSubWords)
     return (
         <div className="px-6 py-4 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">
             <div className='py-2'><svg ref={svgRef} /></div>

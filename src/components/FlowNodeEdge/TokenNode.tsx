@@ -89,9 +89,7 @@ const getBackgroundGetter = ( data, head, hoveredIndex, direction ) => {
   
   const [B, H, T1, T2] = pattern.shape;
   const meandData = pattern.mean(0); 
-  
-  console.log('rerender')
-  
+    
   
   const sliceData = head === -1
   ? meandData
@@ -130,27 +128,28 @@ export const SubWordDisplay = ({ layer=1, head=-1, direction='Key → Query', fo
     
   return (
     <div className="flex">
-    <div className='flex flex-row w-[48em]'>
-    <span className="block text-xs text-slate-400 py-2">{formatting === 'array' && '['}{
-      state.modelInputSubWords[0].map((ele, index) => (
-        <span
-        key={index}
-        id={`word-${index}`}
-        className="px-px"
-        style={{
-          backgroundColor:
-          state.inferencePrompt[0] === state.modelInputText[0] &&
-          seqLength === state.modelInputSubWords[0].length
-          ? getBackgroundColor(index, head)
-          : '',
-        }}
-        onMouseOver={() => setHoveredIndex(index)}
-        onMouseOut={() => setHoveredIndex(null)}
-        >
-        {ele}{formatting === 'array' && ','}
+      <div className='flex flex-row w-[48em]'>
+        <span className="block text-xs text-slate-400 py-2">{formatting === 'array' && '['}{
+          state.modelInputSubWords[0].map((ele, index) => (
+            <span
+            key={index}
+            id={`word-${index}`}
+            className="px-px"
+            style={{
+              backgroundColor:
+              state.inferencePrompt[0] === state.modelInputText[0] &&
+              seqLength === state.modelInputSubWords[0].length
+              ? getBackgroundColor(index, head)
+              : '',
+            }}
+            onMouseOver={() => setHoveredIndex(index)}
+            onMouseOut={() => setHoveredIndex(null)}
+            >
+            {ele}{formatting === 'array' && ','}
+            </span>
+            ))
+          }{formatting === 'array' && ']'}
         </span>
-        ))
-      }{formatting === 'array' && ']'}</span>
       </div>
     </div>
   )
@@ -163,10 +162,10 @@ export const SubWordsNode = ({ data }) => {
   
   return (
     <div className="px-6 py-4 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">
-    <SubWordDisplay layer={layer} head={head} direction={direction} formatting={'array'}/>
-    
-    <Handle type="target" position={Position.Bottom} className="w-16 !bg-teal-500" />
-    <Handle type="source" position={Position.Top} className="w-16 !bg-teal-500" />
+      <SubWordDisplay layer={layer} head={head} direction={direction} formatting={'array'}/>
+      
+      <Handle type="target" position={Position.Bottom} className="w-16 !bg-teal-500" />
+      <Handle type="source" position={Position.Top} className="w-16 !bg-teal-500" />
     </div>
   )
 }

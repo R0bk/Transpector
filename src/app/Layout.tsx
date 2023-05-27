@@ -26,7 +26,11 @@ export const Layout = () => {
         <AllotmentPaneWrapper minSize={200}>
           <div>
             <ModelFlow selectedModel={selectedModel}/>
-              {showModelSelect && <ModelSelectPopup onClose={() => setShowModelSelect(false)} />}
+              {showModelSelect && 
+                <ModelSelectPopup
+                  onClose={(newModelSelection) => {setShowModelSelect(false); setSelectedModel(newModelSelection ?? selectedModel)}}
+                />
+              }
             <OpenButton onClick={() => setShowModelSelect(true)} selectedModel={selectedModel} />
           </div>
         </AllotmentPaneWrapper>

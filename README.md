@@ -9,14 +9,25 @@ To use Transpector first install the package `pip install transpector` then you 
 Coming soon!
 ## Developing locally
 
-In it's development setting currently you have to run two parts, a python script kicking off Jupyter Server (this spawns a fastAPI backend in the same event loop as the IPython Kernal), and a Next JS Server. Next JS will be compiled and served as a static file from fastAPI eventually.
+For efficient development, we want to enable hot reloading of both the typescript and python sides. We can do this for py by `pip install -e .` (from the root directory of this project) to install the python package based out of this directory, meaning when we change a file in this dir we also change the package. From the next.js TS side we can start up a dev server using `npm run dev`, (also in the root dir of this project as per the pip install). This will be hosted at a different point (currently `:80`) but will proxy all api requests to the same port where the standard python backend runs, so if you are only working on the TS you can just use the `transpector` command to start up the backend.
+
+A short note on the py backend, you can examine how transpector starts by looking through launch.py, but in breif:
+
+1. We start a jupyter-server in a thread
+1. Connect to it through http
+1. Create a IPython kernal and start it
+1. Connect to it through websockets
+1. Load our starter notebook
+1. Execute the first few cells in the starter notebook, loading our model of interest
+1. Execute the last few cells in our starter notebook, spawning a fastAPI backend in the same event loop as the IPython Kernal
+1. Host our static bundle of next.js along with our backend api from that fastAPI backend
 
 To run Next JS
 ```bash
 npm run dev
 ```
 
-To launch the python side
+To manually launch the python side
 ```bash
 python launch.py
 ```
@@ -43,7 +54,7 @@ pip install dist/<build-name>
 
 And finally, use our installed package to run the server:
 ```
-transpector run
+transpector
 ```
 
 ## To Do
@@ -65,6 +76,9 @@ transpector run
 - [ ] Move to vector logical clocks for everything
 - [ ] Custom model support
 - [ ] Select many nodes and multi-node selection menus
+- [ ] Edge editing to reflect in model computations
+- [ ] Architecture diagram
+- [ ] Add correct shortformer positional embedding links
 - [ ] Research replication using transpector
 - [ ] Ability to add notes to activations, weights and nodes
 
@@ -72,7 +86,6 @@ transpector run
 
 #### Milestone 1️⃣
 - [ ] Add icons on the edges
-- [ ] Node resizing and rerendering (for canvas nodes)
 - [ ] Weight Analysis: Visualise weights
 - [ ] Weight Analysis: What is the OV circuit trying to copy given a token
 - [ ] Weight Analysis: What is the KQ circuit attention position distribution 
@@ -88,11 +101,9 @@ transpector run
 - [ ] Residual stream analysis visualisation
 - [ ] Improve global state control
 - [ ] Compute/ GPU flags/controls from UI
-- [ ] Add correct shortformer positional embedding links
 - [ ] Move to same data structure in py/ js and ws for syncing
 - [ ] Basic usage tutorial
 - [ ] Make gifs of features
-- [ ] Baisc architecture diagram
 - [ ] Add in app credits
 - [ ] Individual activation level ablations
 - [ ] Basic MLP visuals (what would be useful?)
@@ -115,6 +126,7 @@ transpector run
 - [x] Model Pane Upgrade
 - [x] Nodes disabled, default and highlighted feature
 - [x] Jupyter-UI upgrade
+- [x] Node resizing and rerendering (for canvas nodes)
 - [x] Refactor Nodes and edges code
 - [x] Layernaming bugs
 - [x] Visual spacing optimisation
