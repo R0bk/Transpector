@@ -1,13 +1,12 @@
 # uvicorn main:app --reload
-# from typing import Union
-
+from bisect import insort
 from functools import partial
-from typing import Any, Callable, Literal, Optional, Union, Sequence
+from typing import Any, Callable, Literal, Optional, Union, Sequence, TypedDict
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from torchtyping import TensorType as TT
-from model import get_available_models, get_pretrained_model_config, load_model, ActivationCache, HookPoint, Logits, per_token_losses, TensorType
+import torch as t
+from model import get_available_models, get_pretrained_model_config, load_model, ActivationCache, HookPoint, Logits, per_token_losses, sliceByMinShape
 
 app = FastAPI()
 
@@ -19,9 +18,15 @@ SliceType = list[int] # [from, to]
 AblationTypes = Literal['zero', 'freeze']
 ModelComponent = str
 SliceName = str
-AblationSliceComponents = Literal['slice', 'ablationType']
-AblationsType = dict[ModelComponent, dict[SliceName, dict[AblationSliceComponents, list[SliceType] | AblationTypes ] ] ]
+class AblationSliceComponents(TypedDict):
+    slice: list[SliceType]
+    ablationType: AblationTypes
+AblationsType = dict[ModelComponent, dict[SliceName, AblationSliceComponents ] ]
 
+ablation_priority: dict[AblationTypes, int] = {'freeze': 1, 'zero': 2}
+
+HookName = str
+Cache = dict[HookName, t.Tensor]
 
 
 class Modelling:
@@ -33,6 +38,8 @@ class Modelling:
         self.model_config = get_pretrained_model_config(self.model_name)
         self.available_models = get_available_models()
         self.last_prompt: list[str] = []
+
+        self.last_cache: Cache = {}
 
         self.ablations: AblationsType = {}
         self.fwd_ablation_hooks: list[Hook] = []
@@ -72,13 +79,8 @@ class Modelling:
         if custom_bwd_hooks:
             bwd.extend(custom_bwd_hooks)
 
-        print('forward ablation hooks are')
-        print(self.fwd_ablation_hooks)
-        fwd = [*self.fwd_ablation_hooks, *fwd, *self.fwd_ablation_hooks]
+        fwd = [*self.fwd_ablation_hooks, *fwd]
         bwd.extend(self.bwd_ablation_hooks)
-        print()
-        print(fwd)
-
 
         with self.model.hooks(
             fwd_hooks=fwd,
@@ -90,33 +92,38 @@ class Modelling:
             if incl_bwd:
                 model_out.backward()
 
+        self.last_cache = cache_dict
+
         return model_out_logits, model_out_loss, cache_dict
     
     def ablation_hook(
         self,
-        result: TensorType,
+        result: t.Tensor,
         hook: HookPoint,
+        target_component: str,
+        target_sub_component: str,
         slices: list[SliceType],
         ablation_type: AblationTypes='zero',
-    ) -> TensorType:
-        py_slice = [slice(r[0], r[1] if r[1]!=-1 else None) for r in slices]
-        
+    ) -> t.Tensor:
+        py_slice = [slice(r0, r1 if r1!=-1 else None) for (r0, r1) in slices]
+
         if ablation_type == 'zero':
+            print('albating', hook.name)
             result[py_slice] = 0.0
+        elif ablation_type == 'freeze':
+            print('freezing', hook.name)
+            if hook.name not in self.last_cache:
+                self.last_cache[hook.name] = result.clone().detach()
+
+            cache_slice = self.last_cache[hook.name][py_slice]
+            res_slice = result[py_slice]
+            frozen = t.zeros_like(res_slice)
+            frozen[sliceByMinShape(cache_slice, res_slice)] = cache_slice[sliceByMinShape(cache_slice, res_slice)]
+
+            result[py_slice] = frozen
 
         return result
 
-    def head_ablation_hook(
-        self,
-        attn_result: TT["batch", "seq", "n_heads", "d_model"],
-        hook: HookPoint,
-    ) -> TT["batch", "seq", "n_heads", "d_model"]:
-        
-        layer: int = hook.layer()
-        if layer in self.ablation_heads:
-            attn_result[:, :, self.ablation_heads[layer], :] = 0.0
-
-        return attn_result
 
 
     @classmethod
@@ -168,11 +175,11 @@ class Modelling:
         return  output_tokens.tolist(), output_sub_words, output_logits
 
     @classmethod
-    def clean_loss(cls, loss: TensorType) -> float:
+    def clean_loss(cls, loss: t.Tensor) -> float:
         return loss.item()
     
     @classmethod
-    def clean_token_loss(cls, loss: TensorType) -> list[list[float]]:
+    def clean_token_loss(cls, loss: t.Tensor) -> list[list[float]]:
         return loss.tolist()
 
 
@@ -216,9 +223,8 @@ def tokenize_to_string_tokens(inputItem: InputStringListItem):
 
 @app.put("/api/tokenize/toTokens")
 def tokenize_to_tokens(inputItem: InputStringListItem) -> dict[str, list[list[int]]]:
-    print('tokenizing', inputItem.input)
     ts.last_prompt = inputItem.input
-    print('tokenizing', ts.model.to_tokens(inputItem.input).tolist())
+    print('tokenizing', inputItem.input, 'to', ts.model.to_tokens(inputItem.input).tolist())
     return {"tokens": ts.model.to_tokens(inputItem.input).tolist()}
 
 @app.put("/api/tokenize/toString")
@@ -256,20 +262,35 @@ class InputAblationState(BaseModel):
 
 @app.put("/api/ablation/sync")
 def ablation_sync(input: InputAblationState):
-    print('input', input)
+
     if input.clientLogicalClock >= ts.logical_clock:
-        print('Im here')
         ts.logical_clock += 1
 
-        ts.fwd_ablation_hooks = []
+        temp_hooks_list: list[tuple[int, Hook]] = []
 
         for transformer_component_name, component_slices in input.ablations.items():
             print('transformer comp', transformer_component_name)
             print('transformer comp', component_slices)
-            for _, hook_config in component_slices.items():
+
+            for target_sub_component, hook_config in component_slices.items():
                 print('hook config', hook_config)
-                ablation_hook = partial(ts.ablation_hook, slices=hook_config['slice'], ablation_type=hook_config['ablationType'])
+                ablation_hook = partial(
+                    ts.ablation_hook,
+                    target_component=transformer_component_name,
+                    target_sub_component=target_sub_component,
+                    slices=hook_config['slice'],
+                    ablation_type=hook_config['ablationType']
+                )
+                # Create a tuple with ablationType priority as the first element and the hook as the second
+                hook_tuple = (ablation_priority[hook_config['ablationType']], (transformer_component_name, ablation_hook))
+                
+                # Use insort to insert the tuple in the correct place in the list
+                insort(temp_hooks_list, hook_tuple, key=lambda x: x[0])
+
                 ts.fwd_ablation_hooks.append((transformer_component_name, ablation_hook))
+
+        # Reassign fwd_ablation_hooks to contain only the second element of each tuple (preserving the original format)
+        ts.fwd_ablation_hooks = [hook for _, hook in temp_hooks_list]
 
         ts.ablations = input.ablations
 

@@ -1,27 +1,23 @@
 from model_setup import *
 from transformer_lens import HookedTransformerConfig, ActivationCache
 from transformer_lens.loading_from_pretrained import OFFICIAL_MODEL_NAMES, get_pretrained_model_config
+from jaxtyping import Float
 
-Logits = TT["batch", "position", "d_vocab"]
-TensorType = t.TensorType
+Logits = Float[t.Tensor, "batch", "position", "d_vocab"]
 
 def get_available_models() -> list[HookedTransformerConfig]:
     return [get_pretrained_model_config(m) for m in OFFICIAL_MODEL_NAMES]
 
 def load_model(model_name: str):
     return HookedTransformer.from_pretrained(model_name)
-
-def head_ablation_hook(
-    attn_result: TT["batch", "seq", "n_heads", "d_model"],
-    hook: HookPoint,
-    layer_head_idx_to_ablate: list[tuple[int]]
-) -> TT["batch", "seq", "n_heads", "d_model"]:
-    attn_result[:, :, head_index_to_ablate, :] = 0.
     
 def per_token_losses(logits: Logits, tokens):
     log_probs = F.log_softmax(logits, dim=-1)
     pred_log_probs = t.gather(log_probs[:, :-1], -1, tokens[:, 1:, None])[..., 0]
     return -pred_log_probs[0]
+
+def sliceByMinShape(*tensors: t.Tensor):
+    return [slice(0, r) for r in min([t.shape for t in tensors])]
 
 pattern_hook_names_filter = lambda name: name.endswith("pattern")
 

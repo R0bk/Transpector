@@ -18,7 +18,8 @@ setup(
         "torchtyping",
         "jupyterlab",
         "nbclient",
-        "websockets"
+        "websockets",
+        "jaxtyping"
     ],
     entry_points={"console_scripts": ["transpector=transpector.__main__:cli"]},
     packages=find_packages(exclude=["*.tests", "*.tests.*", "tests.*", "tests"]),

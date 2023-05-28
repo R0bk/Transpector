@@ -4,11 +4,12 @@ Visually inspect, analyse and debug transformer models. Aimed at reducing cycle 
 ![](https://github.com/R0bk/Transpector/blob/main/docs/transpector1.gif)
 ## Getting Started
 
+#### Using Transpector
 To use Transpector first install the package `pip install transpector` then you can start it from the command line with `transpector`. Once it's ready, navigate to `http://127.0.0.1:8000/index.html` to get started.
 
-#### Using Transpector
-
+#### Features
 Coming soon!
+
 ## Developing locally
 
 For efficient development, we want to enable hot reloading of both the typescript and python sides. We can do this for py by `pip install -e .` (from the root directory of this project) to install the python package based out of this directory, meaning when we change a file in this dir we also change the package. From the next.js TS side we can start up a dev server using `npm run dev`, (also in the root dir of this project as per the pip install). This will be hosted at a different point (currently `:80`) but will proxy all api requests to the same port where the standard python backend runs, so if you are only working on the TS you can just use the `transpector` command to start up the backend.
@@ -92,12 +93,8 @@ transpector
 - [ ] Weight Analysis: What is the OV circuit trying to copy given a token
 - [ ] Weight Analysis: What is the KQ circuit attention position distribution 
 - [ ] Visual layer folding
-- [ ] Activation freezing
 - [ ] Pattern visual grouping
 - [ ] Layer and node type filters
-- [ ] Optimisation: WebGPU rendering
-- [ ] Optimisation: Remove dead data
-- [ ] Non blocking model updating
 - [ ] KQV composition visualisation
 - [ ] Residual stream analysis visualisation
 - [ ] Improve global state control
@@ -106,6 +103,7 @@ transpector
 - [ ] Add in app credits
 - [ ] Individual activation level ablations
 - [ ] Basic MLP visuals (what would be useful?)
+- [x] Activation freezing
 - [x] Ablations
 - [x] Canvas summed pattern and result rendering
 - [x] Add readme credits
@@ -136,7 +134,13 @@ transpector
 ### Chores
 - [ ] Basic usage tutorial
 - [ ] Minimap collision with text pane
-- [ ] Make gifs of features
+- [ ] Optimisation: OffscreenCanvas
+- [ ] Optimisation: WebGPU rendering
+- [ ] Optimisation: Remove dead data
+- [ ] Non blocking model updating
+- [ ] Non blocking rendering
+- [ ] Make gifs for each key feature
+- [x] Make main gif
 - [x] Text pane visibility
 - [x] Model selection bugs
 - [x] Layernaming bugs

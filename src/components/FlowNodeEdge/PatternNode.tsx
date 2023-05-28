@@ -13,7 +13,7 @@ const selector = (state) => ({
 
 import * as d3 from 'd3';
 import * as tf from '@tensorflow/tfjs';
-import { GitMergeIcon, GitPullRequestClosedIcon } from '@primer/octicons-react';
+import { GitMergeIcon, GitPullRequestClosedIcon, PinIcon } from '@primer/octicons-react';
 
 // Function to generate a color interpolator based on colourId
 const getColorInterpolator = ( colourId: number, headCount: number=12 ) => {
@@ -172,6 +172,7 @@ export const PatternNode = ({ data, selected }) => {
   const { modelActivations, modelAblations, rmAblations, addAblations } = useStore(selector, shallow);
   const dataSlice = [[0,-1], [data?.relationSliceId, data?.relationSliceId+1], [0,-1], [0,-1]];
   const isAblated = modelAblations?.[data.realationId]?.[dataSlice.toString()]?.slice ?? false
+  const ablationType = modelAblations?.[data.realationId]?.[dataSlice.toString()]?.ablationType
   const [toolbarVisible, setToolbarVisible] = useState(false);
   const [initWidth, initHeight] = [96, 96];
   const [width, setWidth] = useState(initWidth);
@@ -182,11 +183,11 @@ export const PatternNode = ({ data, selected }) => {
   
   return (
     <div 
-      className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${isAblated ? 'grayscale-[95%]' : ''}`}
+      className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${isAblated ? ablationType === 'freeze' ? 'grayscale-[25%]' : 'grayscale-[95%]' : ''}`}
       onMouseEnter={() => setToolbarVisible(true)}
       onMouseLeave={() => setToolbarVisible(false)}
     >
-      <NodeResizer isVisible={selected} minWidth={initWidth} minHeight={initHeight} onResize={(_, { width, height }) => {setWidth(width); setHeight(height-24);}} />
+      <NodeResizer color='#ff0071' isVisible={selected} minWidth={initWidth} minHeight={initHeight} onResize={(_, { width, height }) => {setWidth(width); setHeight(height-24);}} />
       <NodeToolbar offset={0} isVisible={toolbarVisible} position={Position.Right}>
       <div className='flex flex-col'>
         <button
@@ -196,7 +197,7 @@ export const PatternNode = ({ data, selected }) => {
             : () => addAblations(data.realationId, [dataSlice], 'zero')
           }
         >
-          <div title='Ablate Head'><GitPullRequestClosedIcon fill={isAblated ? "#888": "#fff"} size={16} /></div>
+          <div title='Ablate Head'><GitPullRequestClosedIcon fill={ablationType === 'zero' ? "#888": "#fff"} size={16} /></div>
         </button>
         <button
           className="bg-slate-800 hover:bg-red-400 text-slate-300 py-2 px-2 rounded-md my-1"
@@ -207,9 +208,19 @@ export const PatternNode = ({ data, selected }) => {
           >
           <div title='Isolate Head'><GitMergeIcon size={16} /></div>
         </button>
+        <button
+          className="bg-slate-800 hover:bg-red-400 text-slate-300 py-2 px-2 rounded-md my-1"
+          onClick={isAblated
+            ? () => rmAblations(data.realationId, [dataSlice])
+            : () => addAblations(data.realationId, [dataSlice], 'freeze')
+          }
+        >
+          <div title='Freeze Head'><PinIcon size={16} fill={ablationType === 'freeze' ? "#888": "#fff"} /></div>
+        </button>
+
       </div>
       </NodeToolbar>
-      <span className='px-2 py-1 text-sm text-slate-300'>{data.label}</span>
+      <span className='px-2 py-1 text-sm text-slate-300'>{ablationType === 'freeze' && (<PinIcon size={12} />)} {data.label}</span>
       <div className="flex">
         <div className={`flex flex-row w-[${width}px] h-[${height}px]`}>
           {'relationSliceId' in data

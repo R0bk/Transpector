@@ -101,7 +101,7 @@ c.ServerApp.kernel_ws_protocol = None # None or ''
 # JupyterLab
 #################
 
-c.LabApp.collaborative = False
+c.LabApp.collaborative = True
 
 # Statt
 c.ServerApp.file_to_run = './main.ipynb'
