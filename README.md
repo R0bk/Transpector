@@ -1,5 +1,7 @@
 # 🔬 Transpector
 Visually inspect, analyse and debug transformer models. Aimed at reducing cycle times for interpretability research and lowering the barrier to entry.
+
+![](https://github.com/R0bk/Transpector/blob/main/docs/transpector1.gif)
 ## Getting Started
 
 To use Transpector first install the package `pip install transpector` then you can start it from the command line with `transpector`. Once it's ready, navigate to `http://127.0.0.1:8000/index.html` to get started.
@@ -93,7 +95,6 @@ transpector
 - [ ] Activation freezing
 - [ ] Pattern visual grouping
 - [ ] Layer and node type filters
-- [ ] Minimap collision with text pane
 - [ ] Optimisation: WebGPU rendering
 - [ ] Optimisation: Remove dead data
 - [ ] Non blocking model updating
@@ -102,8 +103,6 @@ transpector
 - [ ] Improve global state control
 - [ ] Compute/ GPU flags/controls from UI
 - [ ] Move to same data structure in py/ js and ws for syncing
-- [ ] Basic usage tutorial
-- [ ] Make gifs of features
 - [ ] Add in app credits
 - [ ] Individual activation level ablations
 - [ ] Basic MLP visuals (what would be useful?)
@@ -113,9 +112,7 @@ transpector
 - [x] Model Outputs
 - [x] MLP nodes
 - [x] Layernorm nodes
-- [x] Text pane visibility
 - [x] Notebook loading pre existing kernel
-- [x] Notebook scrolling bugs
 - [x] Pypi package
 - [x] Upgrade model selection pane
 - [x] Improve typing coverage
@@ -128,8 +125,6 @@ transpector
 - [x] Jupyter-UI upgrade
 - [x] Node resizing and rerendering (for canvas nodes)
 - [x] Refactor Nodes and edges code
-- [x] Layernaming bugs
-- [x] Visual spacing optimisation
 - [x] Layer groups
 - [x] Attention head nodes
 - [x] Combined attention node
@@ -137,6 +132,17 @@ transpector
 - [x] Tokenization node
 - [x] Residual stream node
 - [x] Attention text visualisation
+
+### Chores
+- [ ] Basic usage tutorial
+- [ ] Minimap collision with text pane
+- [ ] Make gifs of features
+- [x] Text pane visibility
+- [x] Model selection bugs
+- [x] Layernaming bugs
+- [x] Notebook scrolling bugs
+- [x] Visual spacing optimisation
+
 
 
 ## Credits
