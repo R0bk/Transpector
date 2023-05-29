@@ -8,7 +8,11 @@ Visually inspect, analyse and debug transformer models. Aimed at reducing iterat
 To use Transpector first install the package `pip install transpector` then you can start it from the command line with `transpector`. Once it's ready, navigate to `http://127.0.0.1:8000/index.html` to get started.
 
 #### Features
-Coming soon!
+Analyse, ablate and freeze attention heads (Look at what each head is predicting below).
+![](https://github.com/R0bk/Transpector/blob/main/docs/transpector2.gif)
+
+Analyse loss (Look at how loss drops on a random repeated sequence below).
+![](https://github.com/R0bk/Transpector/blob/main/docs/transpector3.gif)
 
 ## Contributing and Developing locally
 
@@ -86,7 +90,6 @@ transpector
 - [ ] Move to vector logical clocks for everything
 - [ ] Custom model support
 - [ ] Select many nodes and multi-node selection menus
-- [ ] Edge editing to reflect in model computations
 - [ ] Architecture diagram
 - [ ] Add correct shortformer positional embedding links
 - [ ] Research replication using transpector
@@ -96,6 +99,7 @@ transpector
 
 #### Milestone 1️⃣
 - [ ] Add icons on the edges
+- [ ] Edge editing to automatically perform patching
 - [ ] Weight Analysis: Visualise weights
 - [ ] Weight Analysis: What is the OV circuit trying to copy given a token
 - [ ] Weight Analysis: What is the KQ circuit attention position distribution 

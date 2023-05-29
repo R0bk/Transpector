@@ -5,7 +5,7 @@ import { select } from 'd3-selection';
 import { scaleLinear } from 'd3-scale';
 import 'd3-transition';
 import { shallow } from 'zustand/shallow';
-
+import * as d3 from 'd3';
 
 const outputSelector = (state) => ({
     modelOutputlogits: state.modelOutputlogits,
@@ -32,11 +32,11 @@ export const OutputNode = ({ data }) => {
         select(svgRef.current).selectAll("*").remove();
 
         // SVG size
-        const barPadding = 8; // Adjust to add padding between bars
+        const barPadding = 4; // Adjust to add padding between bars
 
         // Create x and y scales
-        const xScale = scaleLinear().domain([0, modelOutputLoss.length]).range([padding, width-padding]);
-        const yScale = scaleLinear().domain([0, Math.max(...modelOutputLoss)]).range([height, 0]);
+        const xScale = scaleLinear().domain([0, modelOutputLoss.length]).range([padding+15, width-padding]);
+        const yScale = scaleLinear().domain([0, Math.max(...modelOutputLoss)]).range([height-1, 4]);
 
         // Create bars
         const svg = select(svgRef.current)
@@ -51,7 +51,7 @@ export const OutputNode = ({ data }) => {
         bars.attr("x", (d, i) => xScale(i))
             .attr("y", (d) => yScale(d as number))
             .attr("width", width / modelOutputLoss.length - barPadding)
-            .attr("height", (d) => height - yScale(d as number))
+            .attr("height", (d) => yScale(0) - yScale(d as number))
             .attr("fill", (d, i) => (i === hoveredIndex ? "#d73027" : "rgba(214, 39, 40, 0.2)"));
 
         // Add mouseover event
@@ -70,6 +70,26 @@ export const OutputNode = ({ data }) => {
             .attr("y2", (d) => yScale(d as number))
             .attr("stroke", (d, i) => (i === hoveredIndex ? "#d73027" : "rgba(214, 39, 40, 0.2)"))
             .attr("stroke-width", 2);
+
+        const yAxis = d3.axisLeft(yScale)
+            .ticks(2)
+            .tickPadding(4)
+            .tickSize(2)
+            .tickValues([Math.max(...modelOutputLoss)]);
+
+        svg.append('g')
+            .attr("transform", "translate(20, 0)")
+            .style("color", "rgba(150,150,150,0.25)")
+            .call(yAxis)
+            .append("text")
+            .attr("class", "text-sm")
+            .attr("transform", "rotate(-90)")
+            .attr("y", -15)
+            .attr("dy", ".71em")
+            .attr("x", -height+32)
+            // .style("text-anchor", "center")
+            .attr("fill", "rgba(150,150,150,0.25)")
+            .text("Loss");
 
     }, [modelOutputLoss, hoveredIndex]);
 

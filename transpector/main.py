@@ -22,7 +22,7 @@ SliceName = str
 class AblationSliceComponents(TypedDict):
     slice: list[SliceType]
     ablationType: AblationTypes
-AblationsType = dict[ModelComponent, dict[SliceName, AblationSliceComponents ] ]
+AblationsType = dict[ModelComponent, dict[SliceName, AblationSliceComponents]]
 
 ablation_priority: dict[AblationTypes, int] = {'freeze': 1, 'zero': 2}
 
@@ -184,10 +184,6 @@ class Modelling:
 
 ts = Modelling()
 
-
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
 
 @app.get("/api/models/getModels")
 def get_models(): 
