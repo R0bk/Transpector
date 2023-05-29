@@ -144,11 +144,6 @@ def launch_script():
     asyncio.set_event_loop(loop)
 
 
-    # Run the code and get the result
-    result = loop.run_until_complete(run_code(kernel_id, "1 + 1"))
-    print(result)
-
-
     def run_all_cells(notebook_data: dict[str, Any]):
         for i, cell in enumerate(notebook_data["content"]["cells"]):
             result = loop.run_until_complete(run_code(kernel_id, cell["source"]))
@@ -228,7 +223,7 @@ def launch_server():
     launch_script_thread = threading.Thread(target=launch_script, daemon=True)
     launch_script_thread.start()
 
-    # Start jupyter server
+    # Starts jupyter server
     start_jupyter_server()
 
 

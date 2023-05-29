@@ -1,5 +1,5 @@
 # 🔬 Transpector
-Visually inspect, analyse and debug transformer models. Aimed at reducing cycle times for interpretability research and lowering the barrier to entry.
+Visually inspect, analyse and debug transformer models. Aimed at reducing iteration times for interpretability research and lowering the barrier to entry.
 
 ![](https://github.com/R0bk/Transpector/blob/main/docs/transpector1.gif)
 ## Getting Started
@@ -10,7 +10,13 @@ To use Transpector first install the package `pip install transpector` then you 
 #### Features
 Coming soon!
 
-## Developing locally
+## Contributing and Developing locally
+
+#### Contributing
+
+Transpector's code base is designed to be extended, and it's easy too see how much oppourtunity there is to take it further. So if you've got some great ideas, want to tie in your research, or just help out with the todo list, please join in. 
+
+#### Developing locally
 
 For efficient development, we want to enable hot reloading of both the typescript and python sides. We can do this for py by `pip install -e .` (from the root directory of this project) to install the python package based out of this directory, meaning when we change a file in this dir we also change the package. From the next.js TS side we can start up a dev server using `npm run dev`, (also in the root dir of this project as per the pip install). This will be hosted at a different point (currently `:80`) but will proxy all api requests to the same port where the standard python backend runs, so if you are only working on the TS you can just use the `transpector` command to start up the backend.
 
@@ -68,6 +74,7 @@ transpector
 - [ ] Causal tracing
 - [ ] Knowledge editing
 - [ ] Basic Layernorm visuals (what would be useful?)
+- [ ] Individual activation level ablations
 - [ ] Text pane batch input
 - [ ] Full dataset input
 - [ ] Autoencoder polysemic decoding
@@ -101,7 +108,6 @@ transpector
 - [ ] Compute/ GPU flags/controls from UI
 - [ ] Move to same data structure in py/ js and ws for syncing
 - [ ] Add in app credits
-- [ ] Individual activation level ablations
 - [ ] Basic MLP visuals (what would be useful?)
 - [x] Activation freezing
 - [x] Ablations
@@ -134,6 +140,7 @@ transpector
 ### Chores
 - [ ] Basic usage tutorial
 - [ ] Minimap collision with text pane
+- [ ] Reloading webpage loses some state
 - [ ] Optimisation: OffscreenCanvas
 - [ ] Optimisation: WebGPU rendering
 - [ ] Optimisation: Remove dead data
@@ -150,4 +157,4 @@ transpector
 
 
 ## Credits
-This work has only been possible through the usage of Transformer Lens by Neel Nanda and has been heavily inspired by circuitviz by Alan Cooney
+This work has only been possible through the usage of Transformer Lens by Neel Nanda (also thanks to Redwood Research for Easy Transformer). It has also been heavily inspired by circuitviz by Alan Cooney and Anthropic's visualisation work.

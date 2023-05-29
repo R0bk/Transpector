@@ -5,8 +5,9 @@ from typing import Any, Callable, Literal, Optional, Union, Sequence, TypedDict
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from transpector.model import get_available_models, get_pretrained_model_config, load_model, ActivationCache, HookPoint, Logits, per_token_losses, sliceByMinShape
+from jaxtyping import Integer
 import torch as t
-from model import get_available_models, get_pretrained_model_config, load_model, ActivationCache, HookPoint, Logits, per_token_losses, sliceByMinShape
 
 app = FastAPI()
 
@@ -100,8 +101,6 @@ class Modelling:
         self,
         result: t.Tensor,
         hook: HookPoint,
-        target_component: str,
-        target_sub_component: str,
         slices: list[SliceType],
         ablation_type: AblationTypes='zero',
     ) -> t.Tensor:
@@ -165,7 +164,7 @@ class Modelling:
         return cache_copy
     
     def clean_logits(self, logits: Logits):
-        output_tokens: list[list[int]] = logits.argmax(dim=-1).squeeze()[:-1]
+        output_tokens: Integer[t.Tensor, "batch seq"] | Integer[t.Tensor, "seq"] = logits.argmax(dim=-1).squeeze()[:-1]
         if output_tokens.dim() == 1:
             output_tokens = output_tokens.unsqueeze(0)
 
@@ -272,12 +271,10 @@ def ablation_sync(input: InputAblationState):
             print('transformer comp', transformer_component_name)
             print('transformer comp', component_slices)
 
-            for target_sub_component, hook_config in component_slices.items():
+            for _target_sub_component, hook_config in component_slices.items():
                 print('hook config', hook_config)
                 ablation_hook = partial(
                     ts.ablation_hook,
-                    target_component=transformer_component_name,
-                    target_sub_component=target_sub_component,
                     slices=hook_config['slice'],
                     ablation_type=hook_config['ablationType']
                 )
