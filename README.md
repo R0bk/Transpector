@@ -4,10 +4,10 @@ Visually inspect, analyse and debug transformer models. Aimed at accelerating in
 ![](https://github.com/R0bk/Transpector/blob/main/docs/transpector1.gif)
 ## Getting Started
 
-#### Using Transpector
+### Using Transpector
 To use Transpector first install the package `pip install transpector` then you can start it from the command line with `transpector`. Once it's ready, navigate to `http://127.0.0.1:8000/index.html` to get started.
 
-#### Features
+### Features
 Analyse, ablate and freeze attention heads (Look at what each head is predicting below).
 ![](https://github.com/R0bk/Transpector/blob/main/docs/transpector2.gif)
 
@@ -19,11 +19,11 @@ Select any model supported by Transformer Lens (there is a todo for correctly li
 
 ## Contributing and Developing locally
 
-#### Contributing
+### Contributing
 
 Transpector's code base is designed to be extended, and it's easy too see how much oppourtunity there is to take it further. So if you've got some great ideas, want to tie in your research, or just help out with the todo list, please join in!
 
-#### Developing locally
+### Developing locally
 
 For efficient development, we want to enable hot reloading of both the typescript and python sides. We can do this for py by `pip install -e .` (from the root directory of this project) to install the python package based out of this directory, meaning when we change a file in this dir we also change the package. From the next.js TS side we can start up a dev server using `npm run dev`, (also in the root dir of this project as per the pip install). This will be hosted at a different point (currently `:80`) but will proxy all api requests to the same port where the standard python backend runs, so if you are only working on the TS you can just use the `transpector` command to start up the backend.
 
@@ -170,11 +170,13 @@ This work has only been possible through the usage of Transformer Lens by Neel N
 ## Citation
 If transpector aided in your research, you can cite transpector as:
 
+```
 @misc{kopeltranspector,
     title  = {Transpector},
     author = {Kopel, Rob},
     url    = {https://github.com/R0bk/Transpector},
     year   = {2023}
 }
+```
 
 Furthermore, please look through the above credits as transpector would not be possible without them. If you have any questions or would like to colloborate please feel free  to reach out to me at rob.kopel on gmail.
