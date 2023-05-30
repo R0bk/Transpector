@@ -71,13 +71,13 @@ export const ModelSelect = ({ onSelect }) => {
   );
 }
 
-export const ModelSelectPopup = ({ onClose }) => {
+export const ModelSelectPopup = ({ onClose, selectedModel }) => {
   return (
     <div className="z-50 fixed top-0 left-0 w-full h-full bg-black bg-opacity-25 flex items-center">
       <div className="ml-12 bg-gray-800 rounded-lg relative">
         <button
           className="absolute top-[-16px] right-[-8px] text-white text-xl font-semibold"
-          onClick={onClose}
+          onClick={() => onClose(selectedModel)}
         >
           &times;
         </button>
@@ -90,7 +90,7 @@ export const ModelSelectPopup = ({ onClose }) => {
 export const OpenButton = ({ onClick, selectedModel }) => {
   return (
     <button
-      className="bg-slate-900 shadow-lg outline rounded-md outline-2 outline-slate-200/20 w-10 h-10  font-semibold fixed top-4 left-4"
+      className="bg-slate-900 shadow-lg outline rounded-md outline-2 outline-slate-200/20 w-10 h-10 font-semibold fixed top-4 left-4"
       onClick={onClick}
     >
       <span className='text-xs text-slate-300 font-light'>{selectedModel}</span>

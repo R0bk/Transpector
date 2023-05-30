@@ -28,6 +28,7 @@ export const Layout = () => {
             <ModelFlow selectedModel={selectedModel}/>
               {showModelSelect && 
                 <ModelSelectPopup
+                  selectedModel={selectedModel}
                   onClose={(newModelSelection) => {setShowModelSelect(false); setSelectedModel(newModelSelection ?? selectedModel)}}
                 />
               }

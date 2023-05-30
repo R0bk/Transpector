@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="transpector",
-    version="0.1.3",
+    version="0.1.4",
     author="Rob Kopel",
     license="LICENSE",
     description="Visually inspect, analyse and debug transformer models. Aimed at reducing cycle times for interpretability research and lowering the barrier to entry.",

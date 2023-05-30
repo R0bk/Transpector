@@ -1,5 +1,5 @@
 # 🔬 Transpector
-Visually inspect, analyse and debug transformer models. Aimed at reducing iteration times for interpretability research and lowering the barrier to entry.
+Visually inspect, analyse and debug transformer models. Aimed at accelerating interpretability research and reducing the barrier to entry.
 
 ![](https://github.com/R0bk/Transpector/blob/main/docs/transpector1.gif)
 ## Getting Started
@@ -14,11 +14,14 @@ Analyse, ablate and freeze attention heads (Look at what each head is predicting
 Analyse loss (Look at how loss drops on a random repeated sequence below).
 ![](https://github.com/R0bk/Transpector/blob/main/docs/transpector3.gif)
 
+Select any model supported by Transformer Lens (there is a todo for correctly linking shortformer models)
+![](https://github.com/R0bk/Transpector/blob/main/docs/transpector4.gif)
+
 ## Contributing and Developing locally
 
 #### Contributing
 
-Transpector's code base is designed to be extended, and it's easy too see how much oppourtunity there is to take it further. So if you've got some great ideas, want to tie in your research, or just help out with the todo list, please join in. 
+Transpector's code base is designed to be extended, and it's easy too see how much oppourtunity there is to take it further. So if you've got some great ideas, want to tie in your research, or just help out with the todo list, please join in!
 
 #### Developing locally
 
@@ -73,52 +76,49 @@ transpector
 ## To Do
 
 #### Milestone 2️⃣
+- [ ] ROME/ MEMIT style search and replace engine for MLP knowledge
+- [ ] Automatic node graph generation based on model graph
 - [ ] Add ability to split each token into seperate node
-- [ ] Inferencing layer cutoff
-- [ ] Causal tracing
-- [ ] Knowledge editing
+- [ ] Inferencing layer cutoff (both where to start and end)
+- [ ] Add graident visualisations (What would be useful here?)
 - [ ] Basic Layernorm visuals (what would be useful?)
 - [ ] Individual activation level ablations
+- [ ] Autoencoder polysemic decoding node attachment
 - [ ] Text pane batch input
-- [ ] Full dataset input
-- [ ] Autoencoder polysemic decoding
-- [ ] Display wide batch selector
-- [ ] Jupyter popups
+- [ ] Dataset upload and controls
+- [ ] Batch example selector across app
+- [ ] Jupyter cell popups for adding mid model hooks
 - [ ] Notebook autosaving
 - [ ] Notebook bring in all jupyterlab features
 - [ ] Websockets for push pull state between py/js
 - [ ] Move to vector logical clocks for everything
-- [ ] Custom model support
-- [ ] Select many nodes and multi-node selection menus
+- [ ] Multi-node selection menu
 - [ ] Architecture diagram
 - [ ] Add correct shortformer positional embedding links
 - [ ] Research replication using transpector
 - [ ] Ability to add notes to activations, weights and nodes
 
-
-
 #### Milestone 1️⃣
 - [ ] Add icons on the edges
-- [ ] Edge editing to automatically perform patching
-- [ ] Weight Analysis: Visualise weights
+- [ ] Edge editing automatically performs patching
+- [ ] Weight Analysis: Visualise weights (What would be useful?)
 - [ ] Weight Analysis: What is the OV circuit trying to copy given a token
 - [ ] Weight Analysis: What is the KQ circuit attention position distribution 
 - [ ] Visual layer folding
-- [ ] Pattern visual grouping
+- [ ] Attention pattern similarity search
 - [ ] Layer and node type filters
-- [ ] KQV composition visualisation
 - [ ] Residual stream analysis visualisation
-- [ ] Improve global state control
-- [ ] Compute/ GPU flags/controls from UI
 - [ ] Move to same data structure in py/ js and ws for syncing
+- [ ] Compute/ GPU flags/controls from UI
 - [ ] Add in app credits
-- [ ] Basic MLP visuals (what would be useful?)
+- [ ] Basic MLP visuals (what would be useful? Dictionary learning, key-value? Neuron view?)
 - [x] Activation freezing
 - [x] Ablations
 - [x] Canvas summed pattern and result rendering
 - [x] Add readme credits
 - [x] Model Outputs
 - [x] MLP nodes
+- [x] KQV basic visualisation
 - [x] Layernorm nodes
 - [x] Notebook loading pre existing kernel
 - [x] Pypi package
@@ -151,6 +151,9 @@ transpector
 - [ ] Non blocking model updating
 - [ ] Non blocking rendering
 - [ ] Make gifs for each key feature
+- [ ] Improve global state control
+- [ ] Favicon
+- [ ] Settings pane
 - [x] Make main gif
 - [x] Text pane visibility
 - [x] Model selection bugs
@@ -162,3 +165,16 @@ transpector
 
 ## Credits
 This work has only been possible through the usage of Transformer Lens by Neel Nanda (also thanks to Redwood Research for Easy Transformer). It has also been heavily inspired by circuitviz by Alan Cooney and Anthropic's visualisation work.
+
+
+## Citation
+If transpector aided in your research, you can cite transpector as:
+
+@misc{kopeltranspector,
+    title  = {Transpector},
+    author = {Kopel, Rob},
+    url    = {https://github.com/R0bk/Transpector},
+    year   = {2023}
+}
+
+Furthermore, please look through the above credits as transpector would not be possible without them. If you have any questions or would like to colloborate please feel free  to reach out to me at rob.kopel on gmail.
