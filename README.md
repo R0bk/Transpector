@@ -3,7 +3,6 @@ Visually inspect, analyse and debug transformer models. Aimed at accelerating in
 
 ![](https://github.com/R0bk/Transpector/blob/main/docs/transpector1.gif)
 ## Getting Started
-
 ### Using Transpector
 To use Transpector first install the package `pip install transpector` then you can start it from the command line with `transpector`. Once it's ready, navigate to `http://127.0.0.1:8000/index.html` to get started.
 
@@ -16,6 +15,11 @@ Analyse loss (Look at how loss drops on a random repeated sequence below).
 
 Select any model supported by Transformer Lens (there is a todo for correctly linking shortformer models)
 ![](https://github.com/R0bk/Transpector/blob/main/docs/transpector4.gif)
+
+Interactive jupyter notebook linked to the Transpector's display (Add custom hooks in py and see the affect on the model results).
+
+### Motivations
+Through determined effort [several](https://arxiv.org/abs/2211.00593) [groups](https://arxiv.org/abs/2301.05217) [have](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html) (not exhaustive, only illustrative) been able to decode probable circuits and algorithms within transformers. Doing so has required significant technical knowledge, experience and time. This, in my eyes doesn't necessarily have to be true hence the foundational question of transpector - How can we reduce the iteration time and barrier of entry for useful mechanistic analysis of transformer models?
 
 ## Contributing and Developing locally
 
@@ -78,6 +82,7 @@ transpector
 #### Milestone 2️⃣
 - [ ] ROME/ MEMIT style search and replace engine for MLP knowledge
 - [ ] Automatic node graph generation based on model graph
+- [ ] [Ability to mix in copy and mix in pinned activations](https://www.alignmentforum.org/posts/5spBue2z2tw4JuDCx/steering-gpt-2-xl-by-adding-an-activation-vector)
 - [ ] Add ability to split each token into seperate node
 - [ ] Inferencing layer cutoff (both where to start and end)
 - [ ] Add graident visualisations (What would be useful here?)
