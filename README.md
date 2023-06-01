@@ -25,7 +25,7 @@ Through determined effort [several](https://arxiv.org/abs/2211.00593) [groups](h
 
 ### Contributing
 
-Transpector's code base is designed to be extended, and it's easy too see how much oppourtunity there is to take it further. So if you've got some great ideas, want to tie in your research, or just help out with the todo list, please join in!
+Transpector's code base is designed to be extended, and it's easy too see how much opportunity there is to take it further. So if you've got some great ideas, want to tie in your research, or just help out with the todo list, please join in!
 
 ### Developing locally
 
@@ -159,6 +159,9 @@ transpector
 - [ ] Improve global state control
 - [ ] Favicon
 - [ ] Settings pane
+- [ ] Support running on remote servers
+- [ ] Support import into standard notebook
+- [x] Launcher cleanup
 - [x] Make main gif
 - [x] Text pane visibility
 - [x] Model selection bugs
@@ -184,4 +187,4 @@ If transpector aided in your research, you can cite transpector as:
 }
 ```
 
-Furthermore, please look through the above credits as transpector would not be possible without them. If you have any questions or would like to colloborate please feel free  to reach out to me at rob.kopel on gmail.
+Furthermore, please look through the above credits as transpector would not be possible without them. If you have any questions or would like to collaborate please feel free  to reach out to me at rob.kopel on gmail.

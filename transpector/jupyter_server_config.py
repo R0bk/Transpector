@@ -8,7 +8,9 @@ import os
 # Logging
 #################
 
-c.ServerApp.log_level = 'INFO'
+c.ServerApp.log_level = 'ERROR'
+c.Application.log_level = 'ERROR'
+c.JupyterApp.log_level = 'ERROR'
 
 #################
 # Network

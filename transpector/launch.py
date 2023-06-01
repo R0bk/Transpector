@@ -5,10 +5,11 @@ import re
 import sys
 import threading
 import time
-from typing import Any
+from typing import Any, Optional
 
 import requests
 import websockets
+from tqdm import tqdm
 from jupyter_server.serverapp import main as jupyter_main
 
 from os.path import join, dirname
@@ -55,12 +56,12 @@ def launch_script():
         "name": session_name,
         "type": "python3"
     })
-    print(session_response.json())
+    # print(session_response.json())
 
     # Get the kernel ID
     kernel_id = session_response.json()['kernel']['id']
     session_id = session_response.json()['id']
-    print('trying kernel id', kernel_id)
+    # print('trying kernel id', kernel_id)
 
 
 
@@ -68,7 +69,6 @@ def launch_script():
 
 
     async def run_code(kernel_id, code):
-        print('attempting to execute', str(random.randrange(0,100000000000000)))
         uri = f"ws://localhost:8686/api/jupyter/api/kernels/{kernel_id}/channels?session_id={session_id}&token=60c1661cc408f978c309d04157af55c9588ff9557c9380e4fb50785750703da6"
         async with websockets.connect(uri) as websocket:
             # Send an execute_request message
@@ -93,7 +93,6 @@ def launch_script():
                 "channel": "shell",
             }
             await websocket.send(json.dumps(execute_request))
-            print('sent')
 
             # Initialize an empty string to store the output
             output = ""
@@ -104,7 +103,7 @@ def launch_script():
             # Get messages until an execute_result message is received
             while True:
                 message = json.loads(await websocket.recv())
-                print(message)
+                # print(message)
                 if message["msg_type"] == "stream":
                     # If the message type is 'stream', append the 'text' from the message to the output
                     output += message["content"]["text"]
@@ -144,8 +143,15 @@ def launch_script():
     asyncio.set_event_loop(loop)
 
 
-    def run_all_cells(notebook_data: dict[str, Any]):
-        for i, cell in enumerate(notebook_data["content"]["cells"]):
+    def run_all_cells(notebook_data: dict[str, Any], messages: Optional[list[str]]=None):
+        total_cells = len(notebook_data["content"]["cells"])
+        if messages is None:
+            messages = [''] * total_cells
+
+        progress_bar = tqdm(total=total_cells, desc="Setting up Notebook", dynamic_ncols=True)
+
+        for i, (cell, message) in enumerate(zip(notebook_data["content"]["cells"], messages)):
+            progress_bar.set_description(f"Running cells: {message}")
             result = loop.run_until_complete(run_code(kernel_id, cell["source"]))
 
             # Update the cell
@@ -163,6 +169,11 @@ def launch_script():
 
             # Update the notebook file
             # notebook["content"]["cells"][-1] = new_cell
+
+            progress_bar.update(1)
+
+        progress_bar.close()
+
         put_url = base_url + f"/jupyter/api/contents/{path}"
         put_response = session.put(put_url, headers=headers, json=notebook_data)
 
@@ -213,7 +224,11 @@ def launch_script():
     get_response = session.get(get_url, headers=headers)
     notebook = get_response.json()
 
-    run_all_cells(notebook)
+    run_all_cells(
+        notebook,
+        messages=['Initialising', 'Loading Libs', 'Setting Types', 'Loading Model', 'Loading endpoints', 'Starting Server']
+    )
+    print('Transpector loaded')
 
 
 

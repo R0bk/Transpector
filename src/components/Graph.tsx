@@ -80,6 +80,7 @@ interface NodePosition {
     type?: string;
     data: PatternData | ResidualData | KqvData | ResultData | GroupData;
     position: NodePosition;
+    deletable?: boolean;
     parentNode?: string;
     extent?: 'parent';
     style?: Style;
@@ -93,10 +94,11 @@ interface NodePosition {
     id: string;
     source: string;
     target: string;
+    deletable?: boolean;
   }
 
 const createEdge = (source: string, target: string): ModelEdge => (
-    { id: `${source}-${target}`, source: source, target: target }
+    { id: `${source}-${target}`, source: source, target: target, deletable: false }
 )
 
 const initialiselLayerConstants = (i, attnOnly) => {
@@ -130,6 +132,7 @@ const createGroupNode = (i, { layerId }, { layerWidth, xStartOffset, layerHeight
     id: layerId,
     // type: 'group',
     data: { label: `Layer ${i}` },
+    deletable: false,
     position: { x: -layerWidth + xStartOffset, y: -(i+1)*(layerHeight+layerPadding) },
     sourcePosition: Position.Top,
     targetPosition: Position.Bottom,
@@ -140,6 +143,7 @@ const createAttnLayerNormNode = ({ layerId, attnLayerNormNodeId }, { layerWidth 
     id: attnLayerNormNodeId,
     type: 'layerNorm',
     data: { label: `Layer Norm` },
+    deletable: false,
     position: { x: layerWidth/2 - 50, y: 850 },
     sourcePosition: Position.Top,
     targetPosition: Position.Bottom,
@@ -155,6 +159,7 @@ const createKqvNode = (type, index, nHeads, { layerId }, { layerInternalPadding 
         realationId: `${layerId}.attn.hook_${type[0]}`,
         kqv: tf.randomNormal([1, 5, nHeads, 5]),
     },
+    deletable: false,
     position: { x: 20 + index * 400, y: layerInternalPadding+ (type==='value' ? 200 : 700) },
     parentNode: layerId,
     extent: 'parent',
@@ -170,6 +175,7 @@ const createPatternNode = (nHeads, { layerId, patternId }, { layerInternalPaddin
         colourId: 0,
         pattern: tf.randomNormal([1, nHeads, 5, 5]),
     },
+    deletable: false,
     position: { x: 600, y: 200+layerInternalPadding },
     parentNode: layerId,
     extent: 'parent',
@@ -189,6 +195,7 @@ const createHeadPatternNodes = (nHeads, { layerId }, { xOffset, layerInternalPad
                 colourId: j,
                 pattern: tf.randomNormal([1, nHeads, 5, 5]),
             },
+            deletable: false,
             position: { x: 20 + j * xOffset, y: 400+layerInternalPadding },
             parentNode: layerId,
             extent: 'parent',
@@ -204,6 +211,7 @@ const createResultNode = (nHeads, { layerId, resultId }, { layerInternalPadding 
         realationId: `${layerId}.attn.hook_z`,
         result: tf.randomNormal([1, nHeads, 5, 5])
     },
+    deletable: false,
     position: { x: 600, y: layerInternalPadding },
     parentNode: layerId,
     extent: 'parent',
@@ -217,6 +225,7 @@ const createAttnResidualNode = ({ layerId, residualId }, { layerHeight, layerPad
         realationId: `${layerId}.hook_resid_mid`,
         residual: tf.randomNormal([1, 5, 5]),
     },
+    deletable: false,
     position: { x: 0, y: -layerHeight - layerPadding - i * (layerHeight+layerPadding) -200},
 })
 
@@ -224,6 +233,7 @@ const createMlPNode = ({ mlpId }, { xStartOffset, layerHeight, layerPadding, lay
     id: mlpId,
     type: 'mlp',
     data: { label: `MLP` },
+    deletable: false,
     position: { x: (-layerWidth)/2.5, y: -(i+1)*(layerHeight+layerPadding) -320 },
 })
 
@@ -231,6 +241,7 @@ const createMlpLayerNormNode = ({ mlpLayerNormId }, { xStartOffset, layerHeight,
     id: mlpLayerNormId,
     type: 'layerNorm',    
     data: { label: `Layer Norm` },
+    deletable: false,
     position: { x: (-layerWidth)/2.5, y: -(i+1)*(layerHeight+layerPadding) -220 },
 })
 
@@ -242,6 +253,7 @@ const createMlpResidualNode = ({ layerId, mlpResidualId }, { layerHeight, layerP
         realationId: `${layerId}.hook_resid_post`,
         residual: tf.randomNormal([1, 5, 5]),
     },
+    deletable: false,
     position: { x: 0, y: -layerHeight - layerPadding - i * (layerHeight+layerPadding) -500},
 })
 
@@ -251,6 +263,7 @@ const createModelOutputNode = ({ modelOutputId }, { layerHeight, layerPadding },
     data: {
         label: `Output`,
     },
+    deletable: false,
     position: { x: -200, y: -layerHeight - layerPadding - i * (layerHeight+layerPadding) -500-300},
 })
 
