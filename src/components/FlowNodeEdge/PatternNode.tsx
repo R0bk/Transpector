@@ -3,17 +3,19 @@ import { Handle, Position, NodeToolbar } from 'reactflow';
 import { NodeResizer } from '@reactflow/node-resizer';
 import { shallow } from 'zustand/shallow';
 import useStore from '../store';
+import * as d3 from 'd3';
+import * as tf from '@tensorflow/tfjs';
+import { GitMergeIcon, GitPullRequestClosedIcon, PinIcon } from '@primer/octicons-react';
+
 
 const selector = (state) => ({
   modelActivations: state.modelActivations,
   modelAblations: state.modelAblations,
   addAblations: state.addAblations,
   rmAblations: state.rmAblations,
+  patchTargetNodes: state.patchTargetNodes,
+  patching: state.patching,
 });
-
-import * as d3 from 'd3';
-import * as tf from '@tensorflow/tfjs';
-import { GitMergeIcon, GitPullRequestClosedIcon, PinIcon } from '@primer/octicons-react';
 
 // Function to generate a color interpolator based on colourId
 const getColorInterpolator = ( colourId: number, headCount: number=12 ) => {
@@ -119,10 +121,10 @@ const PatternPlot = ({ patternData, width, height, renderText=false, colourId=0 
     
   }, [C, T, minMax, syncData, width, height, renderText, colourId]);
   
-  return (<canvas ref={ref} width={width} height={height}></canvas>)
+  return <canvas ref={ref} width={width} height={height}></canvas>;
 };
 
-const SummedPatternPlot = ({ patternData, width, height, useCanvas=true }) => {
+const SummedPatternPlot = ({ patternData, width, height }) => {
   const ref = useRef(null);
 
   const { data, syncData } = patternData;
@@ -160,17 +162,17 @@ const SummedPatternPlot = ({ patternData, width, height, useCanvas=true }) => {
       }
     });
     
-  }, [syncData, C, T, width, height, useCanvas]);
+  }, [syncData, C, T, width, height]);
   
-  return useCanvas ? <canvas ref={ref} width={width} height={height}></canvas> : <svg ref={ref} width={width} height={height}></svg>;
+  return <canvas ref={ref} width={width} height={height}></canvas>;
 };
 
 const getAllOtherSlices = (sliceNo, nHeads) => Array.from({ length: nHeads }, (_, j) => [[0,-1], [j, j+1], [0,-1], [0,-1]] ).filter(n => n[1][0] !== sliceNo);
 
 
-export const PatternNode = ({ data, selected }) => {
-  const { modelActivations, modelAblations, rmAblations, addAblations } = useStore(selector, shallow);
-  const dataSlice = [[0,-1], [data?.relationSliceId, data?.relationSliceId+1], [0,-1], [0,-1]];
+export const PatternNode = ({ id, data, selected }) => {
+  const { modelActivations, modelAblations, rmAblations, addAblations, patchTargetNodes, patching } = useStore(selector, shallow);
+  const dataSlice = [[0,-1], [data?.relationSliceId ?? 0, (data?.relationSliceId ?? -2)+1], [0,-1], [0,-1]];
   const isAblated = modelAblations?.[data.realationId]?.[dataSlice.toString()]?.slice ?? false
   const ablationType = modelAblations?.[data.realationId]?.[dataSlice.toString()]?.ablationType
   const [toolbarVisible, setToolbarVisible] = useState(false);
@@ -178,12 +180,14 @@ export const PatternNode = ({ data, selected }) => {
   const [width, setWidth] = useState(initWidth);
   const [height, setHeight] = useState(initHeight);
 
-  const pattern = usePatternPlotData(modelActivations?.[data.realationId] ?? data.pattern, data?.relationSliceId)
+  const pattern = usePatternPlotData(modelActivations?.[data.realationId] ?? data.activations, data?.relationSliceId)
   
+  // useEffect(() => {addVisualComponent({modelComponent: data.realationId, slice: dataSlice, activationShape: pattern.data.shape})}, []);
+  const grayScale = patching && !patchTargetNodes.has(id);
   
   return (
     <div 
-      className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${isAblated ? ablationType === 'freeze' ? 'grayscale-[25%]' : 'grayscale-[95%]' : ''}`}
+      className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${isAblated || grayScale ? ablationType === 'freeze' ? 'grayscale-[25%]' : 'grayscale-[95%]' : ''}`}
       onMouseEnter={() => setToolbarVisible(true)}
       onMouseLeave={() => setToolbarVisible(false)}
     >
@@ -202,8 +206,8 @@ export const PatternNode = ({ data, selected }) => {
         <button
           className="bg-slate-800 hover:bg-red-400 text-slate-300 py-2 px-2 rounded-md my-1"
           onClick={isAblated
-            ? () => rmAblations(data.realationId, getAllOtherSlices(data?.relationSliceId, data.pattern.shape[1])) 
-            : () => addAblations(data.realationId, getAllOtherSlices(data?.relationSliceId, data.pattern.shape[1]), 'zero')
+            ? () => rmAblations(data.realationId, getAllOtherSlices(data?.relationSliceId, data.activations.shape[1])) 
+            : () => addAblations(data.realationId, getAllOtherSlices(data?.relationSliceId, data.activations.shape[1]), 'zero')
           }
           >
           <div title='Isolate Head'><GitMergeIcon size={16} /></div>
@@ -237,15 +241,17 @@ export const PatternNode = ({ data, selected }) => {
 };
 
 
-export const ResultNode = ({ data }) => {
-  const { modelActivations } = useStore(selector, shallow);
+export const ResultNode = ({ id, data }) => {
+  const { modelActivations, patchTargetNodes, patching } = useStore(selector, shallow);
   const width = 96;
   const height = 96;
 
-  const pattern = usePatternPlotData(modelActivations?.[data.realationId] ?? data.result, undefined)
+  const pattern = usePatternPlotData(modelActivations?.[data.realationId] ?? data.activations, undefined)
+
+  const grayScale = patching && !patchTargetNodes.has(id);
   
   return (
-    <div className="px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">
+    <div className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${grayScale ? 'grayscale-[95%]' : ''}`} >
       <span className='px-2 py-1 text-sm text-slate-300'>{data.label}</span>
       <div className="flex">
         <div className='flex flex-row w-24 h-24'>

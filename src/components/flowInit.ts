@@ -11,7 +11,7 @@ export const initNodes = [
     {
       id: 'tokenizedWords',
       type: 'tokenizedWords',
-      data: { tokenizedWords: [['This', 'is', 'an', 'ex', 'amp', 'le']], pattern: tf.randomNormal([1, 12, 7, 7])},
+      data: { tokenizedWords: [['This', 'is', 'an', 'ex', 'amp', 'le']], activations: tf.randomNormal([1, 12, 7, 7])},
       deletable: false,
       position: { x: -200, y: 300 },
     },
@@ -25,14 +25,14 @@ export const initNodes = [
     {
       id: 'we',
       type: 'embed',
-      data: { label: 'Textual Embedding', realationId: 'hook_embed', embed: tf.randomNormal([1, 5, 5])},
+      data: { label: 'Textual Embedding', realationId: 'hook_embed', activations: tf.randomNormal([1, 5, 5])},
       deletable: false,
       position: { x: -200, y: -200 },
     },
     {
       id: 'pos',
       type: 'embed',
-      data: { label: 'Positional Embedding', realationId: 'hook_pos_embed', embed: tf.randomNormal([1, 5, 5])},
+      data: { label: 'Positional Embedding', realationId: 'hook_pos_embed', activations: tf.randomNormal([1, 5, 5])},
       deletable: false,
       position: { x: 200, y: -200 },
     },

@@ -8,6 +8,8 @@ import React from 'react';
 
 const selector = (state) => ({
   modelActivations: state.modelActivations,
+  patchTargetNodes: state.patchTargetNodes,
+  patching: state.patching,
 });
 
 
@@ -87,22 +89,25 @@ export const KQVPlot = ({ data, width, height, renderText=false }) => {
   };
   
   
-  export const KeyQueryVectorNode = ({ data }) => {
-    const state = useStore(selector, shallow);
+  export const KeyQueryVectorNode = ({ id, data }) => {
+    const { modelActivations, patchTargetNodes, patching } = useStore(selector, shallow);
     const width = 96*2;
     const height = 96;
+
+    const grayScale = patching && !patchTargetNodes.has(id);
+
     
     return (
-      <div className="px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">
-      <span className='px-2 py-1 text-sm text-slate-300'>{data.label}</span>
-      <div className="flex">
-      <div className='flex flex-row w-48 h-24'>
-      <KQVPlot data={state.modelActivations?.[data.realationId] ?? data.kqv} width={width} height={height} />
-      </div>
-      </div>
-      
-      <Handle type="target" position={Position.Bottom} className="w-8 !bg-teal-500" />
-      <Handle type="source" position={Position.Top} className="w-8 !bg-teal-500" />
+      <div className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${grayScale ? 'grayscale-[95%]' : ''}`} >
+        <span className='px-2 py-1 text-sm text-slate-300'>{data.label}</span>
+        <div className="flex">
+          <div className='flex flex-row w-48 h-24'>
+            <KQVPlot data={modelActivations?.[data.realationId] ?? data.activations} width={width} height={height} />
+          </div>
+        </div>
+        
+        <Handle type="target" position={Position.Bottom} className="w-8 !bg-teal-500" />
+        <Handle type="source" position={Position.Top} className="w-8 !bg-teal-500" />
       </div>
       )
     };

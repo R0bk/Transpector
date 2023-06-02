@@ -1,0 +1,1 @@
+export const customConnectionStyle = {stroke: 'rgb(255, 0, 113)', strokeWidth: 2};

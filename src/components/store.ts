@@ -15,9 +15,18 @@ import {
 import * as tf from '@tensorflow/tfjs';
 
 import { initNodes, initEdges } from './flowInit';
+import { customConnectionStyle } from './FlowNodeEdge/customConnectionLine';
 
 const removeKey = (key, {[key]: _, ...rest}) => rest;
 const putMsg = {method: "PUT", headers: {"Content-Type": "application/json"}}
+
+// interface VisualComponent {
+//     modelComponent: string;
+//     slice: string;
+//     activationShape: number[];
+//     weightShape?: number[];
+//     graidentShape?: number[];
+// }
 
 type RFState = {
   logicalClock: number;
@@ -41,10 +50,16 @@ type RFState = {
   modelOutputSubWords: string[][];
   modelOutputLoss: number[][];
   modelOuputFinalLoss: number;
-  modelActivations: { [activationKey: string]: tf.Tensor };
+  modelActivations: { [modelComponent: string]: tf.Tensor };
+  
+  // modelVisualComponents: VisualComponent[];
 
   modelAblations: { [modelComponent: string]: { [slice: string]: { slice: number[][], ablationType: 'zero' | 'freeze' } } };
   syncAblations: (logicalClock: number, ablations: {}) => void;
+
+  // Purely for visual rendering, not server side sycn
+  patching: boolean;
+  patchTargetNodes: Set<string>;
 };
 
 // this is our useStore hook that we can use in our
@@ -66,8 +81,12 @@ const useStore = create<RFState>((set, get) => ({
     });
   },
   onConnect: (connection: Connection) => {
+    const edge = {
+      ...connection,
+      style: customConnectionStyle
+    }
     set({
-      edges: addEdge(connection, get().edges),
+      edges: addEdge(edge, get().edges),
     });
   },
   createNodes( newNodes ) {
@@ -141,10 +160,49 @@ const useStore = create<RFState>((set, get) => ({
         modelOuputFinalLoss: r.finalLoss,
         modelActivations: Object.fromEntries(
           Object.entries(r.activationData).map(([key, val]) => [key, tf.tensor(val as tf.TensorLike)]),
-      )})
+        ),
+      })
       set({ inferencing: false });
     });    
   },
+
+
+  // modelVisualComponents: [],
+  // addVisualComponent(newComponent: VisualComponent) {
+  //   const { modelVisualComponents } = get();
+  //   set({modelVisualComponents: [...modelVisualComponents, newComponent]})
+  // },
+  // rmVisualComponent(prevComponent: VisualComponent) {
+
+  // },
+  // getVisualComponents() {
+  //   const { modelVisualComponents } = get();
+  //   return modelVisualComponents;
+  // },
+
+  patching: false,
+  patchTargetNodes: new Set(),
+  startPatch(_, { nodeId }: { nodeId: string}) {
+    const { nodes } = get();
+    const sourceNode = nodes.find(({ id }) => id === nodeId)!.data.outputShapeStrings;
+    
+    set({
+      patching: true,
+      patchTargetNodes: new Set(
+        nodes.filter(({ data }) => data?.inputShapeStrings?.join(',') === sourceNode.join(',')).map(({ id }) => id)
+      )
+    });
+  },
+  endPatch(_) {
+    set({ patching: false, patchTargetNodes: new Set() })
+  },
+  validPatch({ source, target }) {
+    const { nodes } = get();
+    const sourceNode = nodes.find(({ id }) => id === source)!.data.outputShapeStrings;
+    const targetNode = nodes.find(({ id }) => id === target)!.data.inputShapeStrings;
+    return sourceNode.join(',') === targetNode.join(',');
+  },
+
 
   modelAblations: {},
   syncAblations(logicalClock=get().logicalClock, ablations={}) {

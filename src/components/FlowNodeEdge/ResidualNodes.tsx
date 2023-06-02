@@ -7,10 +7,12 @@ import * as d3 from 'd3';
 
 const selector = (state) => ({
     modelActivations: state.modelActivations,
+    patchTargetNodes: state.patchTargetNodes,
+    patching: state.patching,  
 });
 
 
-export const ResidualPlot = ({ data, width, height, renderText=false, useCanvas=true }) => {
+export const ResidualPlot = ({ data, width, height, renderText=false }) => {
     const ref = useRef(null);
     const marginBottom = 5;
 
@@ -73,21 +75,22 @@ export const ResidualPlot = ({ data, width, height, renderText=false, useCanvas=
         }
     }, [data, width, height]);
 
-    return useCanvas?   (<canvas ref={ref} width={width} height={height}></canvas>) :
-                        (<svg ref={ref} width={width} height={height}></svg>)
+    return <canvas ref={ref} width={width} height={height}></canvas>;
 };
 
-export const EmbedNode = ({ data }) => {
-    const state = useStore(selector, shallow);
+export const EmbedNode = ({ id, data }) => {
+    const { modelActivations, patchTargetNodes, patching } = useStore(selector, shallow);
     const width = 96*3;
     const height = 96*3;
 
+    const grayScale = patching && !patchTargetNodes.has(id);
+
     return (
-        <div className="px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">
+        <div className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${grayScale ? 'grayscale-[95%]' : ''}`} >
             <span className='px-2 py-1 text-sm text-slate-300'>{data.label}</span>
             <div className="flex">
                 <div className='flex flex-row w-72 h-72'>
-                    <ResidualPlot data={state.modelActivations?.[data.realationId] ?? data.embed} width={width} height={height} />
+                    <ResidualPlot data={modelActivations?.[data.realationId] ?? data.activations} width={width} height={height} />
                 </div>
             </div>
 
@@ -97,17 +100,19 @@ export const EmbedNode = ({ data }) => {
     )
 };
 
-export const ResidualNode = ({ data }) => {
-    const state = useStore(selector, shallow);
+export const ResidualNode = ({ id, data }) => {
+    const { modelActivations, patchTargetNodes, patching } = useStore(selector, shallow);
     const width = 96*1.5;
     const height = 96*1.5;
 
+    const grayScale = patching && !patchTargetNodes.has(id);
+
     return (
-        <div className="px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950">
+        <div className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${grayScale ? 'grayscale-[95%]' : ''}`} >
             <span className='px-2 py-1 text-sm text-slate-300'>Attention Residual</span>
             <div className="flex">
                 <div className='flex flex-row '>
-                    <ResidualPlot data={state.modelActivations?.[data.realationId] ?? data.residual} width={width} height={height} />
+                    <ResidualPlot data={modelActivations?.[data.realationId] ?? data.activations} width={width} height={height} />
                 </div>
             </div>
 

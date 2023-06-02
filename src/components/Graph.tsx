@@ -19,16 +19,17 @@ const fetcher = (...args) => fetch(...args).then((res) => res.json())
 
 import * as tf from '@tensorflow/tfjs';
 import { MlpNode } from './FlowNodeEdge/MlpNode';
+import { customConnectionStyle } from './FlowNodeEdge/customConnectionLine';
 
 
-
+type modelComponentDimName = 'seq' | 'dModel' | 'dHead' | 'dMLP' | 'headIdx' | 'nHeads' | 'batch';
 
 interface NodePosition {
     x: number;
     y: number;
-  }
+}
 
-  interface Style {
+interface Style {
     width?: number;
     height?: number;
     backgroundColor?: string;
@@ -36,49 +37,30 @@ interface NodePosition {
     fontSize?: string;
     padding?: string;
     color?: string;
-  }
+}
 
-  interface GroupData {
+interface GroupData {
     label: string;
-  }
-  
-  interface PatternData {
+}
+
+interface BaseData {
     label: string;
-    layerNumber: number,
     realationId: string;
+    inputShapeStrings: modelComponentDimName[];
+    outputShapeStrings: modelComponentDimName[];
+    activations: tf.Tensor;
+}
+  
+interface PatternData extends BaseData {
+    layerNumber: number,
     relationSliceId?: number;
     colourId: number;
-    pattern: tf.Tensor;
-  }
-  
-  interface ResidualData {
-    label: string;
-    realationId: string;
-    residual: tf.Tensor;
-  }
-  interface KqvData {
-    label: string;
-    realationId: string;
-    kqv: tf.Tensor;
-  }
+}
 
-  interface ResultData {
-    label: string;
-    realationId: string;
-    result: tf.Tensor;
-  }
-  
-  interface LayerNormData {
-    label: string;
-    realationId: string;
-    LayerNorm: tf.Tensor;
-  }
-  
-
-  interface BaseNode {
+interface BaseNode {
     id: string;
     type?: string;
-    data: PatternData | ResidualData | KqvData | ResultData | GroupData;
+    data: BaseData | PatternData | GroupData;
     position: NodePosition;
     deletable?: boolean;
     parentNode?: string;
@@ -86,16 +68,16 @@ interface NodePosition {
     style?: Style;
     targetPosition?: Position.Top | Position.Bottom;
     sourcePosition?: Position.Top | Position.Bottom;
-  }
+}
   
-  type ModelNode = BaseNode;
+type ModelNode = BaseNode;
   
-  interface ModelEdge {
+interface ModelEdge {
     id: string;
     source: string;
     target: string;
     deletable?: boolean;
-  }
+}
 
 const createEdge = (source: string, target: string): ModelEdge => (
     { id: `${source}-${target}`, source: source, target: target, deletable: false }
@@ -116,7 +98,6 @@ const initialiselLayerConstants = (i, attnOnly) => {
         mlpId:`${layerId}.mlp`,
         mlpResidualId:`${layerId}.hook_resid_post`,
         modelOutputId: `output`,
-
 })}
 
 const initialiseModelConstants = (modelConfig) => ({
@@ -142,7 +123,11 @@ const createGroupNode = (i, { layerId }, { layerWidth, xStartOffset, layerHeight
 const createAttnLayerNormNode = ({ layerId, attnLayerNormNodeId }, { layerWidth  }): BaseNode => ({
     id: attnLayerNormNodeId,
     type: 'layerNorm',
-    data: { label: `Layer Norm` },
+    data: {
+        label: `Layer Norm`,
+        inputShapeStrings: ['batch', 'seq', 'dModel'],
+        outputShapeStrings: ['batch', 'seq', 'dModel'],
+    },
     deletable: false,
     position: { x: layerWidth/2 - 50, y: 850 },
     sourcePosition: Position.Top,
@@ -157,7 +142,9 @@ const createKqvNode = (type, index, nHeads, { layerId }, { layerInternalPadding 
     data: {
         label: `${type}`,
         realationId: `${layerId}.attn.hook_${type[0]}`,
-        kqv: tf.randomNormal([1, 5, nHeads, 5]),
+        activations: tf.randomNormal([1, 5, nHeads, 5]),
+        inputShapeStrings: ['batch', 'nHeads', 'seq', 'dHead'],
+        outputShapeStrings: ['batch', 'nHeads', 'seq', 'dHead'],
     },
     deletable: false,
     position: { x: 20 + index * 400, y: layerInternalPadding+ (type==='value' ? 200 : 700) },
@@ -173,7 +160,9 @@ const createPatternNode = (nHeads, { layerId, patternId }, { layerInternalPaddin
         layerNumber: i,
         realationId: `${layerId}.attn.hook_pattern`,
         colourId: 0,
-        pattern: tf.randomNormal([1, nHeads, 5, 5]),
+        activations: tf.randomNormal([1, nHeads, 5, 5]),
+        inputShapeStrings: ['batch', 'nHeads', 'seq', 'seq'],
+        outputShapeStrings: ['batch', 'nHeads', 'seq', 'seq'],
     },
     deletable: false,
     position: { x: 600, y: 200+layerInternalPadding },
@@ -193,7 +182,9 @@ const createHeadPatternNodes = (nHeads, { layerId }, { xOffset, layerInternalPad
                 realationId: `${layerId}.attn.hook_pattern`,
                 relationSliceId: j,
                 colourId: j,
-                pattern: tf.randomNormal([1, nHeads, 5, 5]),
+                activations: tf.randomNormal([1, nHeads, 5, 5]),
+                inputShapeStrings: ['batch', 'headIdx', 'seq', 'seq'],
+                outputShapeStrings: ['batch', 'headIdx', 'seq', 'seq'],
             },
             deletable: false,
             position: { x: 20 + j * xOffset, y: 400+layerInternalPadding },
@@ -209,7 +200,9 @@ const createResultNode = (nHeads, { layerId, resultId }, { layerInternalPadding 
     data: {
         label: `Result`,
         realationId: `${layerId}.attn.hook_z`,
-        result: tf.randomNormal([1, nHeads, 5, 5])
+        activations: tf.randomNormal([1, nHeads, 5, 5]),
+        inputShapeStrings: ['batch', 'nHeads', 'seq', 'dModel'],
+        outputShapeStrings: ['batch', 'nHeads', 'seq', 'dModel'],
     },
     deletable: false,
     position: { x: 600, y: layerInternalPadding },
@@ -223,24 +216,34 @@ const createAttnResidualNode = ({ layerId, residualId }, { layerHeight, layerPad
     data: {
         label: `Residual`,
         realationId: `${layerId}.hook_resid_mid`,
-        residual: tf.randomNormal([1, 5, 5]),
+        activations: tf.randomNormal([1, 5, 5]),
+        inputShapeStrings: ['batch', 'seq', 'dModel'],
+        outputShapeStrings: ['batch', 'seq', 'dModel'],
     },
     deletable: false,
     position: { x: 0, y: -layerHeight - layerPadding - i * (layerHeight+layerPadding) -200},
 })
 
-const createMlPNode = ({ mlpId }, { xStartOffset, layerHeight, layerPadding, layerWidth  }, i): BaseNode => ({
+const createMlPNode = ({ mlpId }, { layerHeight, layerPadding, layerWidth  }, i): BaseNode => ({
     id: mlpId,
     type: 'mlp',
-    data: { label: `MLP` },
+    data: {
+        label: `MLP`,
+        inputShapeStrings: ['batch', 'seq', 'dModel'],
+        outputShapeStrings: ['batch', 'seq', 'dModel'],
+    },
     deletable: false,
     position: { x: (-layerWidth)/2.5, y: -(i+1)*(layerHeight+layerPadding) -320 },
 })
 
-const createMlpLayerNormNode = ({ mlpLayerNormId }, { xStartOffset, layerHeight, layerPadding, layerWidth  }, i): BaseNode => ({
+const createMlpLayerNormNode = ({ mlpLayerNormId }, { layerHeight, layerPadding, layerWidth  }, i): BaseNode => ({
     id: mlpLayerNormId,
     type: 'layerNorm',    
-    data: { label: `Layer Norm` },
+    data: {
+        label: `Layer Norm`,
+        inputShapeStrings: ['batch', 'seq', 'dModel'],
+        outputShapeStrings: ['batch', 'seq', 'dModel'],
+    },
     deletable: false,
     position: { x: (-layerWidth)/2.5, y: -(i+1)*(layerHeight+layerPadding) -220 },
 })
@@ -251,7 +254,9 @@ const createMlpResidualNode = ({ layerId, mlpResidualId }, { layerHeight, layerP
     data: {
         label: `Residual`,
         realationId: `${layerId}.hook_resid_post`,
-        residual: tf.randomNormal([1, 5, 5]),
+        activations: tf.randomNormal([1, 5, 5]),
+        inputShapeStrings: ['batch', 'seq', 'dModel'],
+        outputShapeStrings: ['batch', 'seq', 'dModel'],
     },
     deletable: false,
     position: { x: 0, y: -layerHeight - layerPadding - i * (layerHeight+layerPadding) -500},
@@ -262,6 +267,8 @@ const createModelOutputNode = ({ modelOutputId }, { layerHeight, layerPadding },
     type: 'modelOutput',
     data: {
         label: `Output`,
+        inputShapeStrings: ['batch', 'seq', 'dModel'],
+        outputShapeStrings: ['batch', 'seq'],
     },
     deletable: false,
     position: { x: -200, y: -layerHeight - layerPadding - i * (layerHeight+layerPadding) -500-300},
@@ -343,11 +350,14 @@ const flowSelector = (state) => ({
   createNodes: state.createNodes,
   createEdges: state.createEdges,
   resetFlow: state.resetFlow,
+  startPatch: state.startPatch,
+  endPatch: state.endPatch,
+  validPatch: state.validPatch,
 });
 
 
 const Flow = ({ modelConfig }) => {
-    const { nodes, edges, onNodesChange, onEdgesChange, onConnect, createNodes, createEdges, resetFlow } = useStore(flowSelector, shallow);
+    const { nodes, edges, onNodesChange, onEdgesChange, onConnect, createNodes, createEdges, resetFlow, startPatch, endPatch, validPatch } = useStore(flowSelector, shallow);
 
     // Model info          
     const edgeTypes = useMemo(() => ({ button: ButtonEdge, default: BezierEdge }), []);
@@ -387,16 +397,20 @@ const Flow = ({ modelConfig }) => {
             edges={edges}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
             nodeTypes={nodeTypes}
             edgeTypes={edgeTypes}
+            onConnect={onConnect}
+            onConnectStart={startPatch}
+            onConnectEnd={endPatch}
+            isValidConnection={validPatch}
+            connectionLineStyle={customConnectionStyle}
+
             fitView
             className="bg-gray-950"
             minZoom={0.05}
             proOptions={proOptions}
         >
             <MiniMap maskColor={'rgb(2 6 23)'}  nodeColor={'rgb(4 47 46)'} style={{backgroundColor: '#0f172a'}} />
-            {/* <Controls /> */}
             <Background variant={BackgroundVariant.Dots} gap={24} size={1} />
         </ReactFlow>
         
