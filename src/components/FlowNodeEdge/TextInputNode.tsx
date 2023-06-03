@@ -1,7 +1,7 @@
 import { Handle, Position } from 'reactflow';
 import { shallow } from 'zustand/shallow';
 import useStore from '../store';
-import { useVisibleNodes } from './utils';
+import { useVisibleNodes } from './visualNodeUtils';
 import { SubWordDisplay } from './TokenNode'
 import { useState } from 'react';
 import React from 'react';

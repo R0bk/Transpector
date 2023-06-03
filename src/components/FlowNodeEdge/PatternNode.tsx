@@ -40,7 +40,7 @@ const usePatternPlotData = (preSliceData: tf.Tensor, slice: number | undefined) 
   
   useEffect(() => {
     if (dataIdRef.current !== preSliceData.id) {
-      console.log('data id missmatch', dataIdRef.current, preSliceData.id)
+      // console.log('data id missmatch', dataIdRef.current, preSliceData.id)
       dataIdRef.current = preSliceData.id;
 
       const dS = preSliceData.shape as [number, number, number, number];
@@ -170,19 +170,18 @@ const SummedPatternPlot = ({ patternData, width, height }) => {
 const getAllOtherSlices = (sliceNo, nHeads) => Array.from({ length: nHeads }, (_, j) => [[0,-1], [j, j+1], [0,-1], [0,-1]] ).filter(n => n[1][0] !== sliceNo);
 
 
-export const PatternNode = ({ id, data, selected }) => {
+export const PatternNode = ({ id, data: { realationId, relationSliceId, activations, slice, label, colourId }, selected }) => {
   const { modelActivations, modelAblations, rmAblations, addAblations, patchTargetNodes, patching } = useStore(selector, shallow);
-  const dataSlice = [[0,-1], [data?.relationSliceId ?? 0, (data?.relationSliceId ?? -2)+1], [0,-1], [0,-1]];
-  const isAblated = modelAblations?.[data.realationId]?.[dataSlice.toString()]?.slice ?? false
-  const ablationType = modelAblations?.[data.realationId]?.[dataSlice.toString()]?.ablationType
+  const isAblated = modelAblations?.[realationId]?.[slice.toString()]?.slice ?? false
+  const ablationType = modelAblations?.[realationId]?.[slice.toString()]?.ablationType
   const [toolbarVisible, setToolbarVisible] = useState(false);
   const [initWidth, initHeight] = [96, 96];
   const [width, setWidth] = useState(initWidth);
   const [height, setHeight] = useState(initHeight);
 
-  const pattern = usePatternPlotData(modelActivations?.[data.realationId] ?? data.activations, data?.relationSliceId)
+  const pattern = usePatternPlotData(modelActivations?.[realationId] ?? activations, relationSliceId)
   
-  // useEffect(() => {addVisualComponent({modelComponent: data.realationId, slice: dataSlice, activationShape: pattern.data.shape})}, []);
+  // useEffect(() => {addVisualComponent({modelComponent: realationId, slice: slice, activationShape: pattern.shape})}, []);
   const grayScale = patching && !patchTargetNodes.has(id);
   
   return (
@@ -197,8 +196,8 @@ export const PatternNode = ({ id, data, selected }) => {
         <button
           className="bg-slate-800 hover:bg-red-400 text-slate-300 py-2 px-2 rounded-md my-1"
           onClick={isAblated
-            ? () => rmAblations(data.realationId, [dataSlice])
-            : () => addAblations(data.realationId, [dataSlice], 'zero')
+            ? () => rmAblations(realationId, [slice])
+            : () => addAblations(realationId, [slice], 'zero')
           }
         >
           <div title='Ablate Head'><GitPullRequestClosedIcon fill={ablationType === 'zero' ? "#888": "#fff"} size={16} /></div>
@@ -206,8 +205,8 @@ export const PatternNode = ({ id, data, selected }) => {
         <button
           className="bg-slate-800 hover:bg-red-400 text-slate-300 py-2 px-2 rounded-md my-1"
           onClick={isAblated
-            ? () => rmAblations(data.realationId, getAllOtherSlices(data?.relationSliceId, data.activations.shape[1])) 
-            : () => addAblations(data.realationId, getAllOtherSlices(data?.relationSliceId, data.activations.shape[1]), 'zero')
+            ? () => rmAblations(realationId, getAllOtherSlices(relationSliceId, activations.shape[1])) 
+            : () => addAblations(realationId, getAllOtherSlices(relationSliceId, activations.shape[1]), 'zero')
           }
           >
           <div title='Isolate Head'><GitMergeIcon size={16} /></div>
@@ -215,8 +214,8 @@ export const PatternNode = ({ id, data, selected }) => {
         <button
           className="bg-slate-800 hover:bg-red-400 text-slate-300 py-2 px-2 rounded-md my-1"
           onClick={isAblated
-            ? () => rmAblations(data.realationId, [dataSlice])
-            : () => addAblations(data.realationId, [dataSlice], 'freeze')
+            ? () => rmAblations(realationId, [slice])
+            : () => addAblations(realationId, [slice], 'freeze')
           }
         >
           <div title='Freeze Head'><PinIcon size={16} fill={ablationType === 'freeze' ? "#888": "#fff"} /></div>
@@ -224,11 +223,11 @@ export const PatternNode = ({ id, data, selected }) => {
 
       </div>
       </NodeToolbar>
-      <span className='px-2 py-1 text-sm text-slate-300'>{ablationType === 'freeze' && (<PinIcon size={12} />)} {data.label}</span>
+      <span className='px-2 py-1 text-sm text-slate-300'>{ablationType === 'freeze' && (<PinIcon size={12} />)} {label}</span>
       <div className="flex">
         <div className={`flex flex-row w-[${width}px] h-[${height}px]`}>
-          {'relationSliceId' in data
-            ? (<PatternPlot patternData={pattern} width={width} height={height} colourId={data.colourId} />)
+          {relationSliceId !== undefined
+            ? (<PatternPlot patternData={pattern} width={width} height={height} colourId={colourId} />)
             : (<SummedPatternPlot patternData={pattern} width={width} height={height} />)
           }
         </div>
@@ -241,18 +240,18 @@ export const PatternNode = ({ id, data, selected }) => {
 };
 
 
-export const ResultNode = ({ id, data }) => {
+export const ResultNode = ({ id, data: { realationId, activations, label } }) => {
   const { modelActivations, patchTargetNodes, patching } = useStore(selector, shallow);
   const width = 96;
   const height = 96;
 
-  const pattern = usePatternPlotData(modelActivations?.[data.realationId] ?? data.activations, undefined)
+  const pattern = usePatternPlotData(modelActivations?.[realationId] ?? activations, undefined)
 
   const grayScale = patching && !patchTargetNodes.has(id);
   
   return (
     <div className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${grayScale ? 'grayscale-[95%]' : ''}`} >
-      <span className='px-2 py-1 text-sm text-slate-300'>{data.label}</span>
+      <span className='px-2 py-1 text-sm text-slate-300'>{label}</span>
       <div className="flex">
         <div className='flex flex-row w-24 h-24'>
           <SummedPatternPlot patternData={pattern} width={width} height={height} />

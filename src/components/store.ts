@@ -12,6 +12,7 @@ import {
   applyNodeChanges,
   applyEdgeChanges,
 } from 'reactflow';
+import { assocPath, dissocPath } from 'ramda';
 import * as tf from '@tensorflow/tfjs';
 
 import { initNodes, initEdges } from './flowInit';
@@ -27,6 +28,23 @@ const putMsg = {method: "PUT", headers: {"Content-Type": "application/json"}}
 //     weightShape?: number[];
 //     graidentShape?: number[];
 // }
+
+interface modelComponentSlice {
+  [modelComponent: string]: {
+    [slice: string]: { slice: number[][] }
+  };
+}
+interface modelComponentSlicePatches {
+  [modelComponent: string]: {
+    [slice: string]: { slice: number[][], edges: modelComponentSlice }
+  };
+}
+
+interface modelComponentSliceAblations {
+  [modelComponent: string]: {
+    [slice: string]: { slice: number[][], ablationType: 'zero' | 'freeze' }
+  };
+}
 
 type RFState = {
   logicalClock: number;
@@ -54,10 +72,15 @@ type RFState = {
   
   // modelVisualComponents: VisualComponent[];
 
-  modelAblations: { [modelComponent: string]: { [slice: string]: { slice: number[][], ablationType: 'zero' | 'freeze' } } };
-  syncAblations: (logicalClock: number, ablations: {}) => void;
+  modelAblations: modelComponentSliceAblations;
+  syncAblations: (logicalClock: number, ablations: modelComponentSliceAblations) => void;
 
-  // Purely for visual rendering, not server side sycn
+  modelPatches: modelComponentSlicePatches;
+  syncPatches: (logicalClock: number, patches: modelComponentSlicePatches) => void;
+  addPatch: (sourceRealationId: string, sourceSlice: any, targetRelationId: string, targetSlice: any) => void;
+  rmPatch: (sourceRealationId: string, sourceSlice: any, targetRelationId: string, targetSlice: any) => void;
+
+  // Purely for visual rendering, not server side sync
   patching: boolean;
   patchTargetNodes: Set<string>;
 };
@@ -81,10 +104,22 @@ const useStore = create<RFState>((set, get) => ({
     });
   },
   onConnect: (connection: Connection) => {
+    console.log(connection);
+    // Handle Patching
+    const { source, target } = connection;
+    const { nodes } = get();
+    const sourceNode = nodes.find(({ id }) => id === source)!.data;
+    const targetNode = nodes.find(({ id }) => id === target)!.data;
+
+    // Add patch to backend
+    get().addPatch(sourceNode.realationId, sourceNode.slice, targetNode.realationId, targetNode.slice);
+
+    // Add patch style
     const edge = {
       ...connection,
       style: customConnectionStyle
     }
+
     set({
       edges: addEdge(edge, get().edges),
     });
@@ -167,22 +202,43 @@ const useStore = create<RFState>((set, get) => ({
   },
 
 
-  // modelVisualComponents: [],
-  // addVisualComponent(newComponent: VisualComponent) {
-  //   const { modelVisualComponents } = get();
-  //   set({modelVisualComponents: [...modelVisualComponents, newComponent]})
-  // },
-  // rmVisualComponent(prevComponent: VisualComponent) {
+  modelPatches: {},
+  syncPatches(logicalClock=get().logicalClock, patches={}) {
+    fetch("/api/patch/sync", {
+      ...putMsg,
+      body: JSON.stringify({
+        patches: patches,
+        clientLogicalClock: logicalClock
+      }),
+    })
+    .then(r => r.json())
+    .then((r) => {
+      set(state => ({
+        modelPatches: { ...r.patches }, logicalClock: Math.max(logicalClock, r.server_logical_clock)+1
+      }))    
+    });
+  },
+  addPatch(sourceRealationId, sourceSlice, targetRelationId, targetSlice) {
+    const { modelPatches, logicalClock } = get();
+    const sourceAdded = assocPath([sourceRealationId, sourceSlice, 'slice'], sourceSlice, modelPatches);
+    const targetAdded = assocPath(
+      [sourceRealationId, sourceSlice, 'edges', targetRelationId, targetSlice],
+      { slice: targetSlice },
+      sourceAdded
+    );
 
-  // },
-  // getVisualComponents() {
-  //   const { modelVisualComponents } = get();
-  //   return modelVisualComponents;
-  // },
+    get().syncPatches(logicalClock, targetAdded);
+  },
+  rmPatch(sourceRealationId, sourceSlice, targetRelationId, targetSlice) {
+    const { modelPatches, logicalClock } = get();
+    const updatedPatches = dissocPath([sourceRealationId, sourceSlice, 'edges', targetRelationId, targetSlice], modelPatches);
+    
+    get().syncPatches(logicalClock, updatedPatches);
+  },
 
   patching: false,
   patchTargetNodes: new Set(),
-  startPatch(_, { nodeId }: { nodeId: string}) {
+  startPatchEdge(_, { nodeId }: { nodeId: string}) {
     const { nodes } = get();
     const sourceNode = nodes.find(({ id }) => id === nodeId)!.data.outputShapeStrings;
     
@@ -190,17 +246,26 @@ const useStore = create<RFState>((set, get) => ({
       patching: true,
       patchTargetNodes: new Set(
         nodes.filter(({ data }) => data?.inputShapeStrings?.join(',') === sourceNode.join(',')).map(({ id }) => id)
-      )
-    });
+        )
+      });
   },
-  endPatch(_) {
+  endPatchEdge(_) {
     set({ patching: false, patchTargetNodes: new Set() })
   },
-  validPatch({ source, target }) {
+  deletePatchEdge(edges: Edge[]) {
+    const { nodes, rmPatch } = get();
+    edges.map(({ source, target }) => {
+      const sourceNode = nodes.find(({ id }) => id === source)!.data;
+      const targetNode = nodes.find(({ id }) => id === target)!.data;
+  
+      rmPatch(sourceNode.realationId, sourceNode.slice, targetNode.realationId, targetNode.slice)}
+    );
+  },
+  validPatchEdge({ source, target }) {
     const { nodes } = get();
-    const sourceNode = nodes.find(({ id }) => id === source)!.data.outputShapeStrings;
-    const targetNode = nodes.find(({ id }) => id === target)!.data.inputShapeStrings;
-    return sourceNode.join(',') === targetNode.join(',');
+    const sourceNode = nodes.find(({ id }) => id === source)!.data;
+    const targetNode = nodes.find(({ id }) => id === target)!.data;
+    return sourceNode.outputShapeStrings.join(',') === targetNode.inputShapeStrings.join(',');
   },
 
 

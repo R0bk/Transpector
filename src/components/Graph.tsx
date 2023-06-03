@@ -49,6 +49,7 @@ interface BaseData {
     inputShapeStrings: modelComponentDimName[];
     outputShapeStrings: modelComponentDimName[];
     activations: tf.Tensor;
+    slice: number[][];
 }
   
 interface PatternData extends BaseData {
@@ -127,6 +128,7 @@ const createAttnLayerNormNode = ({ layerId, attnLayerNormNodeId }, { layerWidth 
         label: `Layer Norm`,
         inputShapeStrings: ['batch', 'seq', 'dModel'],
         outputShapeStrings: ['batch', 'seq', 'dModel'],
+        slice: [[0,-1], [0,-1], [0,-1]],
     },
     deletable: false,
     position: { x: layerWidth/2 - 50, y: 850 },
@@ -145,6 +147,7 @@ const createKqvNode = (type, index, nHeads, { layerId }, { layerInternalPadding 
         activations: tf.randomNormal([1, 5, nHeads, 5]),
         inputShapeStrings: ['batch', 'nHeads', 'seq', 'dHead'],
         outputShapeStrings: ['batch', 'nHeads', 'seq', 'dHead'],
+        slice: [[0,-1], [0,-1], [0,-1], [0,-1]],
     },
     deletable: false,
     position: { x: 20 + index * 400, y: layerInternalPadding+ (type==='value' ? 200 : 700) },
@@ -163,6 +166,7 @@ const createPatternNode = (nHeads, { layerId, patternId }, { layerInternalPaddin
         activations: tf.randomNormal([1, nHeads, 5, 5]),
         inputShapeStrings: ['batch', 'nHeads', 'seq', 'seq'],
         outputShapeStrings: ['batch', 'nHeads', 'seq', 'seq'],
+        slice: [[0,-1], [0,-1], [0,-1], [0,-1]],
     },
     deletable: false,
     position: { x: 600, y: 200+layerInternalPadding },
@@ -185,6 +189,7 @@ const createHeadPatternNodes = (nHeads, { layerId }, { xOffset, layerInternalPad
                 activations: tf.randomNormal([1, nHeads, 5, 5]),
                 inputShapeStrings: ['batch', 'headIdx', 'seq', 'seq'],
                 outputShapeStrings: ['batch', 'headIdx', 'seq', 'seq'],
+                slice: [[0,-1], [j,j+1], [0,-1], [0,-1]],
             },
             deletable: false,
             position: { x: 20 + j * xOffset, y: 400+layerInternalPadding },
@@ -203,6 +208,7 @@ const createResultNode = (nHeads, { layerId, resultId }, { layerInternalPadding 
         activations: tf.randomNormal([1, nHeads, 5, 5]),
         inputShapeStrings: ['batch', 'nHeads', 'seq', 'dModel'],
         outputShapeStrings: ['batch', 'nHeads', 'seq', 'dModel'],
+        slice: [[0,-1], [0,-1], [0,-1], [0,-1]],
     },
     deletable: false,
     position: { x: 600, y: layerInternalPadding },
@@ -219,6 +225,7 @@ const createAttnResidualNode = ({ layerId, residualId }, { layerHeight, layerPad
         activations: tf.randomNormal([1, 5, 5]),
         inputShapeStrings: ['batch', 'seq', 'dModel'],
         outputShapeStrings: ['batch', 'seq', 'dModel'],
+        slice: [[0,-1], [0,-1], [0,-1]],
     },
     deletable: false,
     position: { x: 0, y: -layerHeight - layerPadding - i * (layerHeight+layerPadding) -200},
@@ -231,6 +238,7 @@ const createMlPNode = ({ mlpId }, { layerHeight, layerPadding, layerWidth  }, i)
         label: `MLP`,
         inputShapeStrings: ['batch', 'seq', 'dModel'],
         outputShapeStrings: ['batch', 'seq', 'dModel'],
+        slice: [[0,-1], [0,-1], [0,-1]],
     },
     deletable: false,
     position: { x: (-layerWidth)/2.5, y: -(i+1)*(layerHeight+layerPadding) -320 },
@@ -243,6 +251,7 @@ const createMlpLayerNormNode = ({ mlpLayerNormId }, { layerHeight, layerPadding,
         label: `Layer Norm`,
         inputShapeStrings: ['batch', 'seq', 'dModel'],
         outputShapeStrings: ['batch', 'seq', 'dModel'],
+        slice: [[0,-1], [0,-1], [0,-1]],
     },
     deletable: false,
     position: { x: (-layerWidth)/2.5, y: -(i+1)*(layerHeight+layerPadding) -220 },
@@ -257,6 +266,7 @@ const createMlpResidualNode = ({ layerId, mlpResidualId }, { layerHeight, layerP
         activations: tf.randomNormal([1, 5, 5]),
         inputShapeStrings: ['batch', 'seq', 'dModel'],
         outputShapeStrings: ['batch', 'seq', 'dModel'],
+        slice: [[0,-1], [0,-1], [0,-1]],
     },
     deletable: false,
     position: { x: 0, y: -layerHeight - layerPadding - i * (layerHeight+layerPadding) -500},
@@ -269,6 +279,7 @@ const createModelOutputNode = ({ modelOutputId }, { layerHeight, layerPadding },
         label: `Output`,
         inputShapeStrings: ['batch', 'seq', 'dModel'],
         outputShapeStrings: ['batch', 'seq'],
+        slice: [[0,-1], [0,-1], [0,-1]],
     },
     deletable: false,
     position: { x: -200, y: -layerHeight - layerPadding - i * (layerHeight+layerPadding) -500-300},
@@ -350,14 +361,15 @@ const flowSelector = (state) => ({
   createNodes: state.createNodes,
   createEdges: state.createEdges,
   resetFlow: state.resetFlow,
-  startPatch: state.startPatch,
-  endPatch: state.endPatch,
-  validPatch: state.validPatch,
+  startPatch: state.startPatchEdge,
+  endPatch: state.endPatchEdge,
+  validPatch: state.validPatchEdge,
+  deletePatch: state.deletePatchEdge,
 });
 
 
 const Flow = ({ modelConfig }) => {
-    const { nodes, edges, onNodesChange, onEdgesChange, onConnect, createNodes, createEdges, resetFlow, startPatch, endPatch, validPatch } = useStore(flowSelector, shallow);
+    const { nodes, edges, onNodesChange, onEdgesChange, onConnect, createNodes, createEdges, resetFlow, startPatch, endPatch, validPatch, deletePatch } = useStore(flowSelector, shallow);
 
     // Model info          
     const edgeTypes = useMemo(() => ({ button: ButtonEdge, default: BezierEdge }), []);
@@ -402,6 +414,7 @@ const Flow = ({ modelConfig }) => {
             onConnect={onConnect}
             onConnectStart={startPatch}
             onConnectEnd={endPatch}
+            onEdgesDelete={deletePatch}
             isValidConnection={validPatch}
             connectionLineStyle={customConnectionStyle}
 

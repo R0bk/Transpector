@@ -5,29 +5,42 @@ from typing import Any, Callable, Literal, Optional, Union, Sequence, TypedDict
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
-from transpector.model import get_available_models, get_pretrained_model_config, load_model, ActivationCache, HookPoint, Logits, per_token_losses, sliceByMinShape
-from jaxtyping import Integer
+from transpector.model import get_available_models, get_pretrained_model_config, load_model, HookPoint, Logits, per_token_losses, sliceByMinShape
+from jaxtyping import Integer, Float
 import torch as t
 
 app = FastAPI()
 
+HookName = str
+Cache = dict[HookName, t.Tensor]
+
 NamesFilter = Optional[Union[Callable[[str], bool], Sequence[str]]]
-Hook = tuple[Union[str, Callable[..., Any]], Callable[..., Any]]
+Hook = tuple[Union[HookName, Callable[..., Any]], Callable[..., Any]]
 
 
-SliceType = list[int] # [from, to]
-AblationTypes = Literal['zero', 'freeze']
-ModelComponent = str
-SliceName = str
+ModelComponentName = str # Id of a model compnent as a string
+SliceName = str # Id of a slice as a string
+
+Slice = list[int] # Slice of a single dinension[from, to]
+TensorSlice = list[Slice] # Slice for a whole tensor
+AblationTypes = Literal['zero', 'freeze'] # Types of ablation we support
+
+class ModelComponentSlice(TypedDict):
+    slice: TensorSlice
+ModelComponent = dict[ModelComponentName, dict[SliceName, ModelComponentSlice]]
+
 class AblationSliceComponents(TypedDict):
-    slice: list[SliceType]
+    slice: TensorSlice
     ablationType: AblationTypes
-AblationsType = dict[ModelComponent, dict[SliceName, AblationSliceComponents]]
+AblationsType = dict[ModelComponentName, dict[SliceName, AblationSliceComponents]]
 
 ablation_priority: dict[AblationTypes, int] = {'freeze': 1, 'zero': 2}
 
-HookName = str
-Cache = dict[HookName, t.Tensor]
+class PatchSliceComponents(TypedDict):
+    slice: TensorSlice
+    edges: ModelComponent
+PatchesType = dict[ModelComponentName, dict[SliceName, PatchSliceComponents]]
+
 
 
 class Modelling:
@@ -40,11 +53,16 @@ class Modelling:
         self.available_models = get_available_models()
         self.last_prompt: list[str] = []
 
+        self.live_cache: Cache = {}
         self.last_cache: Cache = {}
 
         self.ablations: AblationsType = {}
         self.fwd_ablation_hooks: list[Hook] = []
         self.bwd_ablation_hooks: list[Hook] = []
+
+        self.patches: PatchesType = {}
+        self.fwd_patch_hooks: list[Hook] = []
+        self.bwd_patch_hooks: list[Hook] = []
 
     @property
     def session_config(self):
@@ -60,7 +78,7 @@ class Modelling:
 
     def run_with_hooks(
             self,
-            prompt,
+            prompt: str | list[str],
             custom_fwd_hooks: Optional[list[Hook]]=None,
             custom_bwd_hooks: Optional[list[Hook]]=None,
             names_filter: NamesFilter = None,
@@ -69,9 +87,37 @@ class Modelling:
             incl_bwd: bool=False,
             reset_hooks_end: bool=True,
             clear_contexts: bool=False,
-        ):
-        cache_dict, fwd, bwd = self.model.get_caching_hooks(
-            names_filter, incl_bwd, device, remove_batch_dim=remove_batch_dim
+    ):
+        """
+        Modified version of run_with_hooks from Transformer Lens
+
+        Prompts the model with specified forward and backward hooks and brings in all ablation
+        and patching hooks set on the modelling object
+
+        Args:
+            prompt: Model prompt, can be batched list or single string 
+            custom_fwd_hooks: A list of (name, hook), where name is
+                either the name of a hook point or a boolean function on hook names, and hook is the
+                function to add to that hook point. Hooks with names that evaluate to True are added
+                respectively.
+            custom_bwd_hooks: Same as fwd_hooks, but for the backward pass.
+            names_filter: Limits the global cache using filter (this may impact ablation and 
+                patching hooks)
+            device: Device to run the model on
+            remove_batch_dim: Strips the batch dimension
+            incl_bwd: Enable doing a backward pass in addition to foward
+            reset_hooks_end (bool): If True, all hooks are removed at the end, including those added
+                during this run. Default is True.
+            clear_contexts (bool): If True, clears hook contexts whenever hooks are reset. Default is
+                False.
+
+        Note:
+            If you want to use backward hooks, set `reset_hooks_end` to False, so the backward hooks
+            remain active. This function only runs a forward pass.
+        """
+        
+        _, fwd, bwd = self.model.get_caching_hooks(
+            names_filter, incl_bwd, device, remove_batch_dim=remove_batch_dim, cache=self.live_cache
         )
 
         if custom_fwd_hooks:
@@ -80,8 +126,9 @@ class Modelling:
         if custom_bwd_hooks:
             bwd.extend(custom_bwd_hooks)
 
-        fwd = [*self.fwd_ablation_hooks, *fwd]
-        bwd.extend(self.bwd_ablation_hooks)
+        # We want to do ablations before patches and patches before caching activations
+        fwd = [*self.fwd_ablation_hooks, *self.fwd_patch_hooks, *fwd]
+        bwd = [*self.bwd_ablation_hooks, *self.bwd_patch_hooks, *bwd]
 
         with self.model.hooks(
             fwd_hooks=fwd,
@@ -93,23 +140,55 @@ class Modelling:
             if incl_bwd:
                 model_out.backward()
 
-        self.last_cache = cache_dict
+        self.last_cache = self.live_cache.copy()
+        self.live_cache = {} # Reset live cache after run
 
-        return model_out_logits, model_out_loss, cache_dict
+        return model_out_logits, model_out_loss, self.last_cache
+    
+    def patch_hook(
+            self,
+            result: t.Tensor,
+            hook: HookPoint,
+            source_component: ModelComponentName,
+            source_slice: TensorSlice,
+            target_component: ModelComponentName,
+            target_slice: TensorSlice,
+    ):
+        """
+        For the purpose of Transpector a patch is a hook that takes an activation from a slice of a
+        model component and applies it to a slice of another model component.
+
+        These two components are called the source and the target, source is where the copy happens
+        and target is where the paste is applied. To do this we use our cache that has saved the source
+        previously and add a hook on the target to apply from the saved cache.
+        """
+
+        source_py_slice = [slice(r0, r1 if r1!=-1 else None) for (r0, r1) in source_slice]
+        target_py_slice = [slice(r0, r1 if r1!=-1 else None) for (r0, r1) in target_slice]
+
+        if source_component in self.live_cache:
+            result[target_py_slice] = self.live_cache[source_component][source_py_slice]
+        elif source_component in self.last_cache and \
+            result[target_py_slice].shape == self.last_cache[source_component][source_py_slice].shape:
+            result[target_py_slice] = self.last_cache[source_component][source_py_slice]
+
+        return result
     
     def ablation_hook(
         self,
         result: t.Tensor,
         hook: HookPoint,
-        slices: list[SliceType],
+        slices: TensorSlice,
         ablation_type: AblationTypes='zero',
     ) -> t.Tensor:
+        assert hook.name
         py_slice = [slice(r0, r1 if r1!=-1 else None) for (r0, r1) in slices]
 
         if ablation_type == 'zero':
             print('albating', hook.name)
             result[py_slice] = 0.0
         elif ablation_type == 'freeze':
+            
             print('freezing', hook.name)
             if hook.name not in self.last_cache:
                 self.last_cache[hook.name] = result.clone().detach()
@@ -126,7 +205,7 @@ class Modelling:
 
 
     @classmethod
-    def clean_cache(cls, cache: ActivationCache):
+    def clean_cache(cls, cache: Cache):
         """
         # Attrs to keep
         'hook_embed',
@@ -151,27 +230,30 @@ class Modelling:
         'blocks.*.mlp.hook_pre',
         'blocks.*.mlp.hook_post',
         """
-        cache_copy = {}
+        cache_copy: dict[ModelComponentName, Float[list[float], "..."]] = {}
         for key, value in cache.items():
             match key.split('.'):
                 case ['hook_embed'] | ['hook_pos_embed'] | ['ln_final', 'hook_normalized']:
                     cache_copy[key] = value.tolist()
-                case ['blocks', blockno, ('hook_resid_pre' | 'hook_attn_out' | 'hook_resid_mid' | 'hook_mlp_out' | 'hook_resid_post')]:
+                case ['blocks', _blockno, ('hook_resid_pre' | 'hook_attn_out' | 'hook_resid_mid' | 'hook_mlp_out' | 'hook_resid_post')]:
                     cache_copy[key] = value.tolist()
-                case ['blocks', blockno, 'attn', ('hook_q' | 'hook_k' | 'hook_v' | 'hook_z' | 'hook_pattern')]:
+                case ['blocks', _blockno, 'attn', ('hook_q' | 'hook_k' | 'hook_v' | 'hook_z' | 'hook_pattern')]:
                     cache_copy[key] = value.tolist()
+                case _:
+                    pass
 
         return cache_copy
     
     def clean_logits(self, logits: Logits):
-        output_tokens: Integer[t.Tensor, "batch seq"] | Integer[t.Tensor, "seq"] = logits.argmax(dim=-1).squeeze()[:-1]
-        if output_tokens.dim() == 1:
-            output_tokens = output_tokens.unsqueeze(0)
+        tokens: Integer[t.Tensor, "batch seq"] | Integer[t.Tensor, "seq"] = logits.argmax(dim=-1).squeeze()[:-1]
+        if tokens.dim() == 1:
+            tokens = tokens.unsqueeze(0)
 
-        output_sub_words = [self.model.to_str_tokens(t) for t in output_tokens]
+        output_tokens: list[list[int]] = tokens.tolist()
+        sub_words: list[list[str]] = [self.model.to_str_tokens(t) for t in tokens]
         output_logits: list[list[list[float]]] = logits.tolist()
 
-        return  output_tokens.tolist(), output_sub_words, output_logits
+        return  output_tokens, sub_words, output_logits
 
     @classmethod
     def clean_loss(cls, loss: t.Tensor) -> float:
@@ -217,10 +299,11 @@ def tokenize_to_string_tokens(inputItem: InputStringListItem):
     return {"stringTokens": ts.model.to_str_tokens(inputItem.input)}
 
 @app.put("/api/tokenize/toTokens")
-def tokenize_to_tokens(inputItem: InputStringListItem) -> dict[str, list[list[int]]]:
+def tokenize_to_tokens(inputItem: InputStringListItem):
     ts.last_prompt = inputItem.input
-    print('tokenizing', inputItem.input, 'to', ts.model.to_tokens(inputItem.input).tolist())
-    return {"tokens": ts.model.to_tokens(inputItem.input).tolist()}
+    tokens: list[list[int]] = ts.model.to_tokens(inputItem.input).tolist()
+    print('tokenizing', inputItem.input, 'to', tokens)
+    return {"tokens": tokens}
 
 @app.put("/api/tokenize/toString")
 def tokenize_to_string(inputItem: InputIntListItem):
@@ -280,7 +363,7 @@ def ablation_sync(input: InputAblationState):
                 # Use insort to insert the tuple in the correct place in the list
                 insort(temp_hooks_list, hook_tuple, key=lambda x: x[0])
 
-                ts.fwd_ablation_hooks.append((transformer_component_name, ablation_hook))
+                ts.fwd_ablation_hooks.append((transformer_component_name, ablation_hook)) # TODO, can kill this line?
 
         # Reassign fwd_ablation_hooks to contain only the second element of each tuple (preserving the original format)
         ts.fwd_ablation_hooks = [hook for _, hook in temp_hooks_list]
@@ -290,6 +373,60 @@ def ablation_sync(input: InputAblationState):
     return {
         "server_logical_clock": ts.logical_clock,
         "ablations": ts.ablations
+    }
+
+
+class InputPatchState(BaseModel):
+    patches: PatchesType
+    clientLogicalClock: int
+
+@app.put("/api/patch/sync")
+def patch_sync(input: InputPatchState):
+    """
+    Sync hook patches between frontend and backend code
+
+    For the purpose of Transpector a patch is a hook that takes an activation from a slice of a
+    model component and applies it to a slice of another model component.
+
+    These two components are called the source and the target, source is where the copy happens
+    and target is where the paste is applied. To do this we use our cache that has saved the source
+    previously and add a hook on the target to apply from the saved cache.
+    """
+
+    if input.clientLogicalClock >= ts.logical_clock:
+        ts.logical_clock += 1
+
+        temp_hooks_list: list[Hook] = []
+
+        for source_component_name, source_slices in input.patches.items():
+            print('transformer comp', source_component_name)
+            print('transformer comp', source_slices)
+
+            for _source_slice_id, source_slice_info in source_slices.items():
+                print('hook config', source_slice_info)
+
+                for target_component_name, target_slices in source_slice_info['edges'].items():
+                    for _target_slice_id, target_slice_config in target_slices.items():
+
+                        # When creating a patch we want to read from the source and transfer the
+                        # activations to the target, so the hook has to be triggered on the
+                        # target's name not the sources
+                        patch_hook = partial(
+                            ts.patch_hook,
+                            source_component=source_component_name,
+                            source_slice=source_slice_info['slice'],
+                            target_component=target_component_name,
+                            target_slice=target_slice_config['slice']
+                        )
+                        temp_hooks_list.append((target_component_name, patch_hook))
+
+        ts.fwd_patch_hooks = temp_hooks_list
+
+        ts.patches = input.patches
+
+    return {
+        "server_logical_clock": ts.logical_clock,
+        "patches": ts.patches
     }
 
 app.mount("/", StaticFiles(directory="/frontend_dist", html=True), name="out")

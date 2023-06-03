@@ -95,7 +95,6 @@ export const KQVPlot = ({ data, width, height, renderText=false }) => {
     const height = 96;
 
     const grayScale = patching && !patchTargetNodes.has(id);
-
     
     return (
       <div className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${grayScale ? 'grayscale-[95%]' : ''}`} >

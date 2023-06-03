@@ -1,5 +1,5 @@
 from typing import Callable
-from transformer_lens import HookedTransformer, HookedTransformerConfig, ActivationCache
+from transformer_lens import HookedTransformer, HookedTransformerConfig
 from transformer_lens.hook_points import HookPoint
 from transformer_lens.loading_from_pretrained import OFFICIAL_MODEL_NAMES, get_pretrained_model_config
 from jaxtyping import Float
