@@ -175,7 +175,7 @@ export const PatternNode = ({ id, data: { realationId, relationSliceId, activati
   const isAblated = modelAblations?.[realationId]?.[slice.toString()]?.slice ?? false
   const ablationType = modelAblations?.[realationId]?.[slice.toString()]?.ablationType
   const [toolbarVisible, setToolbarVisible] = useState(false);
-  const [initWidth, initHeight] = [96, 96];
+  const [initWidth, initHeight, headerHeight] = [96, 96, 24];
   const [width, setWidth] = useState(initWidth);
   const [height, setHeight] = useState(initHeight);
 
@@ -190,7 +190,7 @@ export const PatternNode = ({ id, data: { realationId, relationSliceId, activati
       onMouseEnter={() => setToolbarVisible(true)}
       onMouseLeave={() => setToolbarVisible(false)}
     >
-      <NodeResizer color='#ff0071' isVisible={selected} minWidth={initWidth} minHeight={initHeight} onResize={(_, { width, height }) => {setWidth(width); setHeight(height-24);}} />
+      <NodeResizer color='#ff0071' isVisible={selected} minWidth={initWidth} minHeight={initHeight+headerHeight} onResize={(_, { width, height }) => {setWidth(width); setHeight(height-headerHeight);}} />
       <NodeToolbar offset={0} isVisible={toolbarVisible} position={Position.Right}>
       <div className='flex flex-col'>
         <button
@@ -240,10 +240,11 @@ export const PatternNode = ({ id, data: { realationId, relationSliceId, activati
 };
 
 
-export const ResultNode = ({ id, data: { realationId, activations, label } }) => {
+export const ResultNode = ({ id, data: { realationId, activations, label }, selected }) => {
   const { modelActivations, patchTargetNodes, patching } = useStore(selector, shallow);
-  const width = 96;
-  const height = 96;
+  const [initWidth, initHeight, headerHeight] = [96, 96, 24];
+  const [width, setWidth] = useState(initWidth);
+  const [height, setHeight] = useState(initHeight);
 
   const pattern = usePatternPlotData(modelActivations?.[realationId] ?? activations, undefined)
 
@@ -251,6 +252,7 @@ export const ResultNode = ({ id, data: { realationId, activations, label } }) =>
   
   return (
     <div className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${grayScale ? 'grayscale-[95%]' : ''}`} >
+      <NodeResizer color='#ff0071' isVisible={selected} minWidth={initWidth} minHeight={initHeight+headerHeight} onResize={(_, { width, height }) => {setWidth(width); setHeight(height-headerHeight);}} />
       <span className='px-2 py-1 text-sm text-slate-300'>{label}</span>
       <div className="flex">
         <div className='flex flex-row w-24 h-24'>

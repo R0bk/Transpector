@@ -1,5 +1,5 @@
-import React, { useRef, useEffect } from 'react'
-import { Handle, Position } from 'reactflow';
+import React, { useRef, useEffect, useState } from 'react'
+import { Handle, NodeResizer, Position } from 'reactflow';
 import { shallow } from 'zustand/shallow';
 import useStore from '../store';
 import * as d3 from 'd3';
@@ -78,15 +78,18 @@ export const ResidualPlot = ({ data, width, height, renderText=false }) => {
     return <canvas ref={ref} width={width} height={height}></canvas>;
 };
 
-export const EmbedNode = ({ id, data }) => {
+export const EmbedNode = ({ id, data, selected }) => {
     const { modelActivations, patchTargetNodes, patching } = useStore(selector, shallow);
-    const width = 96*3;
-    const height = 96*3;
+    const [initWidth, initHeight, headerHeight] = [96*3, 96*3, 24];
+    const [width, setWidth] = useState(initWidth);
+    const [height, setHeight] = useState(initHeight);
+  
 
     const grayScale = patching && !patchTargetNodes.has(id);
 
     return (
         <div className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${grayScale ? 'grayscale-[95%]' : ''}`} >
+            <NodeResizer color='#ff0071' isVisible={selected} minWidth={initWidth} minHeight={initHeight+headerHeight} onResize={(_, { width, height }) => {setWidth(width); setHeight(height-headerHeight);}} />
             <span className='px-2 py-1 text-sm text-slate-300'>{data.label}</span>
             <div className="flex">
                 <div className='flex flex-row w-72 h-72'>
@@ -100,15 +103,18 @@ export const EmbedNode = ({ id, data }) => {
     )
 };
 
-export const ResidualNode = ({ id, data }) => {
+export const ResidualNode = ({ id, data, selected }) => {
     const { modelActivations, patchTargetNodes, patching } = useStore(selector, shallow);
-    const width = 96*1.5;
-    const height = 96*1.5;
+    const [initWidth, initHeight, headerHeight] = [96*1.5, 96*1.5, 24];
+    const [width, setWidth] = useState(initWidth);
+    const [height, setHeight] = useState(initHeight);
+  
 
     const grayScale = patching && !patchTargetNodes.has(id);
 
     return (
         <div className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${grayScale ? 'grayscale-[95%]' : ''}`} >
+            <NodeResizer color='#ff0071' isVisible={selected} minWidth={initWidth} minHeight={initHeight+headerHeight} onResize={(_, { width, height }) => {setWidth(width); setHeight(height-headerHeight);}} />
             <span className='px-2 py-1 text-sm text-slate-300'>Attention Residual</span>
             <div className="flex">
                 <div className='flex flex-row '>

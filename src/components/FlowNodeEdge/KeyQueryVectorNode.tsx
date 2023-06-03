@@ -1,7 +1,7 @@
-import { Handle, Position } from 'reactflow';
+import { Handle, NodeResizer, Position } from 'reactflow';
 import { shallow } from 'zustand/shallow';
 import useStore from '../store';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as d3 from 'd3';
 import React from 'react';
 
@@ -85,28 +85,31 @@ export const KQVPlot = ({ data, width, height, renderText=false }) => {
       }
     }, [data, width, height]);
     
-    return (<canvas ref={ref} width={width} height={height}></canvas>)
+    return <canvas ref={ref} width={width} height={height}></canvas>;
   };
   
   
-  export const KeyQueryVectorNode = ({ id, data }) => {
-    const { modelActivations, patchTargetNodes, patching } = useStore(selector, shallow);
-    const width = 96*2;
-    const height = 96;
+export const KeyQueryVectorNode = ({ id, data, selected }) => {
+  const { modelActivations, patchTargetNodes, patching } = useStore(selector, shallow);
+  const [initWidth, initHeight, headerHeight] = [96*2, 96, 24];
+  const [width, setWidth] = useState(initWidth);
+  const [height, setHeight] = useState(initHeight);
 
-    const grayScale = patching && !patchTargetNodes.has(id);
-    
-    return (
-      <div className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${grayScale ? 'grayscale-[95%]' : ''}`} >
-        <span className='px-2 py-1 text-sm text-slate-300'>{data.label}</span>
-        <div className="flex">
-          <div className='flex flex-row w-48 h-24'>
-            <KQVPlot data={modelActivations?.[data.realationId] ?? data.activations} width={width} height={height} />
-          </div>
+
+  const grayScale = patching && !patchTargetNodes.has(id);
+  
+  return (
+    <div className={`px-0 py-0 shadow-md rounded-md bg-slate-900 border-2 border-stone-950 ${grayScale ? 'grayscale-[95%]' : ''}`} >
+      <NodeResizer color='#ff0071' isVisible={selected} minWidth={initWidth} minHeight={initHeight+headerHeight} onResize={(_, { width, height }) => {setWidth(width); setHeight(height-headerHeight);}} />
+      <span className='px-2 py-1 text-sm text-slate-300'>{data.label}</span>
+      <div className="flex">
+        <div className='flex flex-row w-48 h-24'>
+          <KQVPlot data={modelActivations?.[data.realationId] ?? data.activations} width={width} height={height} />
         </div>
-        
-        <Handle type="target" position={Position.Bottom} className="w-8 !bg-teal-500" />
-        <Handle type="source" position={Position.Top} className="w-8 !bg-teal-500" />
       </div>
-      )
-    };
+      
+      <Handle type="target" position={Position.Bottom} className="w-8 !bg-teal-500" />
+      <Handle type="source" position={Position.Top} className="w-8 !bg-teal-500" />
+    </div>
+  )
+};
