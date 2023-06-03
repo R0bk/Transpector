@@ -105,7 +105,6 @@ transpector
 
 #### Milestone 1️⃣
 - [ ] Add icons on the edges
-- [ ] Edge editing automatically performs patching
 - [ ] Weight Analysis: Visualise weights (What would be useful?)
 - [ ] Weight Analysis: What is the OV circuit trying to copy given a token
 - [ ] Weight Analysis: What is the KQ circuit attention position distribution 
@@ -115,8 +114,8 @@ transpector
 - [ ] Residual stream analysis visualisation
 - [ ] Move to same data structure in py/ js and ws for syncing
 - [ ] Compute/ GPU flags/controls from UI
-- [ ] Add in app credits
 - [ ] Basic MLP visuals (what would be useful? Dictionary learning, key-value? Neuron view?)
+- [x] Edge editing automatically performs patching
 - [x] Activation freezing
 - [x] Ablations
 - [x] Canvas summed pattern and result rendering
@@ -155,12 +154,19 @@ transpector
 - [ ] Optimisation: Remove dead data
 - [ ] Non blocking model updating
 - [ ] Non blocking rendering
-- [ ] Make gifs for each key feature
 - [ ] Improve global state control
 - [ ] Favicon
 - [ ] Settings pane
 - [ ] Support running on remote servers
 - [ ] Support import into standard notebook
+- [ ] Make gif of patching
+- [ ] Make gif of resizing
+- [ ] Keyboard shortcuts
+- [ ] Add in app credits
+- [x] Cleanup slices
+- [x] Cleanup activation passing
+- [x] Node resizing for all visual nodes
+- [x] Make gifs for each key feature
 - [x] Launcher cleanup
 - [x] Make main gif
 - [x] Text pane visibility
