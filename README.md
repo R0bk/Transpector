@@ -7,16 +7,20 @@ Visually inspect, analyse and debug transformer models. Aimed at accelerating in
 To use Transpector first install the package `pip install transpector` then you can start it from the command line with `transpector`. Once it's ready, navigate to `http://127.0.0.1:8000/index.html` to get started.
 
 ### Features
-Analyse, ablate and freeze attention heads (Look at what each head is predicting below).
+Analyse, ablate and freeze attention heads (See what each head is predicting below).
 ![](https://github.com/R0bk/Transpector/blob/main/docs/transpector2.gif)
 
-Analyse loss (Look at how loss drops on a random repeated sequence below).
+Patch activations from heads, residuals, keys or any node by drawing connections.
+![](https://github.com/R0bk/Transpector/blob/main/docs/transpector5.gif)
+
+Analyse loss (See how loss drops on a random repeated sequence below).
 ![](https://github.com/R0bk/Transpector/blob/main/docs/transpector3.gif)
 
-Select any model supported by Transformer Lens (there is a todo for correctly linking shortformer models)
+Select any model supported by Transformer Lens (some models e.g. shortformers aren't fully supported as of yet).
 ![](https://github.com/R0bk/Transpector/blob/main/docs/transpector4.gif)
 
-Interactive jupyter notebook linked to the Transpector's display (Add custom hooks in py and see the affect on the model results).
+Interactive jupyter notebook for codeing and adding custom hooks to be reflected into Transpector.
+![](https://github.com/R0bk/Transpector/blob/main/docs/transpector6.gif)
 
 ### Motivations
 Through determined effort [several](https://arxiv.org/abs/2211.00593) [groups](https://arxiv.org/abs/2301.05217) [have](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html) (not exhaustive, only illustrative) been able to decode probable circuits and algorithms within transformers. Doing so has required significant technical knowledge, experience and time. This, in my eyes doesn't necessarily have to be true hence the foundational question of transpector - How can we reduce the iteration time and barrier of entry for useful mechanistic analysis of transformer models?
@@ -159,10 +163,11 @@ transpector
 - [ ] Settings pane
 - [ ] Support running on remote servers
 - [ ] Support import into standard notebook
-- [ ] Make gif of patching
 - [ ] Make gif of resizing
 - [ ] Keyboard shortcuts
 - [ ] Add in app credits
+- [x] Make gif of patching
+- [x] Make gif of notebook
 - [x] Cleanup slices
 - [x] Cleanup activation passing
 - [x] Node resizing for all visual nodes
