@@ -22,6 +22,9 @@ Select any model supported by Transformer Lens (some models e.g. shortformers ar
 Interactive jupyter notebook for codeing and adding custom hooks to be reflected into Transpector.
 ![](https://github.com/R0bk/Transpector/blob/main/docs/transpector6.gif)
 
+### Supported Models
+The GPT-2, Pythia, Opt, Llama and several other common model families are supported. Please the full listing [here](https://github.com/R0bk/Transpector/blob/main/docs/supportedModels.md)
+
 ### Motivations
 Through determined effort [several](https://arxiv.org/abs/2211.00593) [groups](https://arxiv.org/abs/2301.05217) [have](https://transformer-circuits.pub/2022/in-context-learning-and-induction-heads/index.html) (not exhaustive, only illustrative) been able to decode probable circuits and algorithms within transformers. Doing so has required significant technical knowledge, experience and time. This, in my eyes doesn't necessarily have to be true hence the foundational question of transpector - How can we reduce the iteration time and barrier of entry for useful mechanistic analysis of transformer models?
 
